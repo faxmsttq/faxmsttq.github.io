@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>หลังบ้าน ลอยกระทง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Charm:wght@700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1220;--panel:#0f1a2c;--moon:#f3e9d2;--dim:rgba(243,233,210,.62);--faint:rgba(243,233,210,.4);--line:rgba(243,233,210,.1);
+    --candle:#f6c26b;--leaf:#7fb069;--rose:#ff9b8a;--ink:#1b1f33}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--moon);font-family:"IBM Plex Sans Thai Looped",system-ui,sans-serif;font-size:15px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+  button,input,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;background:none;border:0}
+  a{color:var(--candle)}
+  :focus-visible{outline:2px solid var(--candle);outline-offset:2px;border-radius:6px}
+  [hidden]{display:none!important}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+  /* ---------- เข้าสู่ระบบ ---------- */
+  .login{min-height:100vh;display:grid;place-items:center;padding:24px;
+    background:radial-gradient(60% 50% at 70% 20%,rgba(246,194,107,.08),transparent 70%)}
+  .login-box{width:min(380px,100%)}
+  .brand{font-family:"Charm",serif;font-weight:700;font-size:44px;line-height:1.1}
+  .login-box p.sub{color:var(--dim);margin:4px 0 26px}
+  label{display:block;font-size:13.5px;color:var(--dim);margin:14px 0 6px}
+  .input{width:100%;padding:11px 13px;border-radius:9px;border:1px solid rgba(243,233,210,.16);background:rgba(243,233,210,.04);outline:none;font-size:15px}
+  .input:focus{border-color:var(--candle)}
+  textarea.input{resize:vertical;min-height:70px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:9px;font-weight:600;font-size:14.5px;transition:background .15s}
+  .btn-main{background:var(--candle);color:var(--ink)}
+  .btn-main:hover{background:#f9d08a}
+  .btn-main:disabled{opacity:.55;cursor:not-allowed}
+  .btn-line{border:1px solid rgba(243,233,210,.2)}
+  .btn-line:hover{background:rgba(243,233,210,.06)}
+  .btn-danger{color:var(--rose)}
+  .btn-danger:hover{background:rgba(255,155,138,.1)}
+  .full{width:100%;margin-top:22px;padding:12px}
+  .msg{margin-top:14px;font-size:14px;color:var(--rose)}
+  .note{margin-top:22px;padding:14px 16px;border-radius:10px;background:rgba(243,233,210,.04);border:1px solid var(--line);font-size:13.5px;color:var(--dim)}
+  .note code{font-size:12.5px;color:var(--moon);background:rgba(243,233,210,.08);padding:1px 5px;border-radius:4px}
+
+  /* ---------- โครงหลัก ---------- */
+  .top{position:sticky;top:0;z-index:5;background:rgba(10,18,32,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;gap:22px;height:64px}
+  .top .brand{font-size:28px}
+  .top .event{color:var(--faint);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  nav{display:flex;gap:2px;margin-left:auto}
+  .top .brand{white-space:nowrap}
+  nav a{white-space:nowrap;padding:8px 13px;border-radius:8px;color:var(--dim);text-decoration:none;font-size:14.5px;position:relative}
+  nav a:hover{color:var(--moon);background:rgba(243,233,210,.05)}
+  nav a[aria-current="page"]{color:var(--moon)}
+  nav a[aria-current="page"]::after{content:"";position:absolute;left:13px;right:13px;bottom:-13px;height:2px;background:var(--candle)}
+  .badge{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--candle);color:var(--ink);font-size:12px;font-weight:600;margin-left:6px}
+  .top-actions{display:flex;gap:6px}
+  main.wrap{padding-top:34px;padding-bottom:80px}
+  a.btn{text-decoration:none;color:var(--moon)}
+  h2{font-size:22px;font-weight:600;margin-bottom:4px}
+  .lead{color:var(--dim);margin-bottom:26px}
+  section+section{margin-top:42px}
+  h3{font-size:15.5px;font-weight:600;margin-bottom:14px}
+
+  /* ---------- ภาพรวม ---------- */
+  .figures{margin-bottom:38px;display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .fig{padding:18px 16px 16px;border-left:1px solid var(--line)}
+  .fig:first-child{border-left:0;padding-left:0}
+  .fig b{display:block;font-size:30px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+  .fig span{font-size:13px;color:var(--dim)}
+  .fig a{color:inherit;text-decoration:none}
+  .fig.warn b{color:var(--candle)}
+  .chart{width:100%;height:190px;display:block}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  .hbar{display:grid;grid-template-columns:58px 92px 1fr 48px;align-items:center;gap:10px;padding:6px 0}
+  .hbar canvas{width:58px;height:40px}
+  .hbar .track{height:8px;border-radius:4px;background:rgba(243,233,210,.07);overflow:hidden}
+  .hbar .fill{height:100%;background:var(--candle);border-radius:4px}
+  .hbar .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--dim)}
+
+  /* ---------- ตรวจกระทง ---------- */
+  .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  .filters{display:flex;gap:4px;flex-wrap:wrap}
+  .filters button{padding:7px 13px;border-radius:999px;border:1px solid var(--line);color:var(--dim);font-size:14px}
+  .filters button[aria-pressed="true"]{border-color:var(--candle);color:var(--moon);background:rgba(246,194,107,.08)}
+  .search{flex:1;min-width:200px;max-width:320px;margin-left:auto}
+  .bulk{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:rgba(246,194,107,.08);border:1px solid rgba(246,194,107,.25);margin-bottom:12px;font-size:14px}
+  .bulk .grow{flex:1}
+  .newbar{display:block;width:100%;padding:9px;border-radius:9px;border:1px dashed rgba(246,194,107,.4);color:var(--candle);margin-bottom:12px;font-size:14px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-weight:500;font-size:13px;color:var(--faint);padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  td.c{width:36px}
+  td.k canvas{width:64px;height:44px;display:block}
+  .who{font-weight:600}
+  .sn{font-weight:400;font-size:13px;color:var(--candle);margin-left:10px}
+  .what{color:var(--dim);word-break:break-word;max-width:52ch}
+  .when{font-size:13px;color:var(--faint);white-space:nowrap}
+  .st{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+  .st i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .st.visible i{background:var(--leaf)} .st.pending i{background:var(--candle)} .st.hidden i{background:rgba(243,233,210,.35)}
+  .flag{display:inline-block;margin-top:4px;font-size:12px;color:var(--rose)}
+  .acts{display:flex;gap:2px;justify-content:flex-end;white-space:nowrap}
+  .acts .btn{padding:6px 10px;font-size:13.5px;font-weight:500}
+  input[type=checkbox]{width:17px;height:17px;accent-color:var(--candle);cursor:pointer}
+  .more{display:block;margin:18px auto 0}
+  .empty{padding:50px 0;text-align:center;color:var(--dim)}
+
+  /* ---------- ตั้งค่า ---------- */
+  .form{max-width:620px}
+  form.form + section.form{margin-top:52px;padding-top:30px;border-top:1px solid var(--line)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .switch{display:flex;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .switch input{appearance:none;width:42px;height:24px;border-radius:999px;background:rgba(243,233,210,.15);position:relative;flex:none;margin-top:2px;cursor:pointer;transition:background .2s}
+  .switch input::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--moon);transition:transform .2s}
+  .switch input:checked{background:var(--candle)}
+  .switch input:checked::after{transform:translateX(18px);background:var(--ink)}
+  .switch b{display:block;font-weight:600}
+  .switch small{display:block;color:var(--dim);font-size:13.5px}
+  .save-row{display:flex;align-items:center;gap:14px;margin-top:24px}
+  .saved{font-size:14px;color:var(--leaf)}
+  .words{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+  .word{display:inline-flex;align-items:center;gap:6px;padding:5px 6px 5px 12px;border-radius:999px;border:1px solid var(--line);font-size:14px}
+  .word button{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:var(--faint)}
+  .word button:hover{background:rgba(255,155,138,.15);color:var(--rose)}
+  .addword{display:flex;gap:8px;max-width:420px}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,10px);padding:11px 18px;border-radius:10px;background:#16243b;border:1px solid rgba(246,194,107,.3);opacity:0;pointer-events:none;transition:.3s;z-index:20;font-size:14.5px}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  @media (max-width:860px){
+    .figures{grid-template-columns:repeat(3,1fr)}
+    .fig:nth-child(4){border-left:0;padding-left:0}
+    .fig:nth-child(n+4){border-top:1px solid var(--line)}
+    .split,.row2{grid-template-columns:1fr}
+    .top .event{display:none}
+    nav a{padding:8px 9px}
+    thead{display:none}
+    tr{display:grid;grid-template-columns:36px 64px 1fr;gap:4px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
+    td{border:0;padding:0}
+    td.w{grid-column:3}
+    td.t,td.s{grid-column:3}
+    td.a{grid-column:1/-1}
+    .acts{justify-content:flex-start}
+  }
+  @media (max-width:560px){
+    .wrap{padding:0 16px}
+    .top .wrap{flex-wrap:wrap;height:auto;gap:0 10px;padding-top:8px}
+    .top .brand{font-size:26px}
+    .top-actions{margin-left:auto}
+    .top-actions a.btn{display:none}
+    nav{order:3;width:100%;margin:4px 0 0;overflow-x:auto}
+    nav a[aria-current="page"]::after{bottom:0}
+    nav a{padding:8px 12px 12px}
+  }
+</style>
+</head>
+<body>
+
+<!-- เข้าสู่ระบบ -->
+<div class="login" id="loginView" hidden>
+  <form class="login-box" id="loginForm">
+    <h1 class="brand">หลังบ้าน</h1>
+    <p class="sub">สำหรับผู้ดูแลงานลอยกระทงออนไลน์</p>
+    <label for="email">อีเมล</label>
+    <input class="input" id="email" type="email" autocomplete="username" required>
+    <label for="password">รหัสผ่าน</label>
+    <input class="input" id="password" type="password" autocomplete="current-password" required>
+    <button class="btn btn-main full" id="loginBtn" type="submit">เข้าสู่ระบบ</button>
+    <p class="msg" id="loginMsg" role="alert" hidden></p>
+  </form>
+</div>
+
+<!-- ยังไม่ได้ตั้งค่า -->
+<div class="login" id="setupView" hidden>
+  <div class="login-box" style="width:min(520px,100%)">
+    <h1 class="brand">หลังบ้าน</h1>
+    <p class="sub">ยังไม่ได้เชื่อมต่อฐานข้อมูล Supabase</p>
+    <div class="note" style="margin-top:0">
+      ใส่ <code>SUPABASE_URL</code> และ <code>SUPABASE_KEY</code> ในไฟล์ <code>config.js</code> แล้วรันไฟล์ <code>supabase/schema.sql</code> ใน SQL Editor ตามขั้นตอนใน README
+    </div>
+    <button class="btn btn-main full" id="demoBtn" type="button">ดูหลังบ้านแบบตัวอย่าง</button>
+    <p class="note">โหมดตัวอย่างใช้ข้อมูลในเบราว์เซอร์นี้เท่านั้น เปลี่ยนค่าแล้วจะเห็นผลที่หน้าเว็บหลักในเครื่องเดียวกัน</p>
+  </div>
+</div>
+
+<!-- ไม่มีสิทธิ์ -->
+<div class="login" id="denyView" hidden>
+  <div class="login-box" style="width:min(520px,100%)">
+    <h1 class="brand">หลังบ้าน</h1>
+    <p class="sub">บัญชี <b id="denyEmail"></b> ยังไม่มีสิทธิ์แอดมิน</p>
+    <div class="note" style="margin-top:0">
+      เปิด Supabase Dashboard → SQL Editor แล้วรัน:<br><br>
+      <code id="denySql"></code>
+    </div>
+    <button class="btn btn-line full" id="denyOut" type="button">ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- หลังบ้าน -->
+<div id="appView" hidden>
+  <header class="top">
+    <div class="wrap">
+      <span class="brand">หลังบ้าน</span>
+      <span class="event" id="eventLbl"></span>
+      <nav aria-label="เมนูหลังบ้าน">
+        <a href="#overview" data-view="overview">ภาพรวม</a>
+        <a href="#moderate" data-view="moderate">ตรวจกระทง<span class="badge" id="pendingBadge" hidden></span></a>
+        <a href="#settings" data-view="settings">ตั้งค่า</a>
+      </nav>
+      <div class="top-actions">
+        <a class="btn btn-line" href="index.html" target="_blank" rel="noopener"><span class="lbl">ดูหน้าเว็บ</span><span class="sr-only-alt" aria-hidden="true"></span></a>
+        <button class="btn btn-line" id="logoutBtn" type="button">ออก</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- ภาพรวม -->
+    <div data-panel="overview">
+      <h2>ภาพรวม</h2>
+      <p class="lead" id="ovLead">ตัวเลขอัปเดตเองเมื่อมีกระทงใหม่</p>
+      <div class="figures">
+        <div class="fig"><b id="fTotal">–</b><span>กระทงทั้งหมด</span></div>
+        <div class="fig"><b id="fToday">–</b><span>ลอยวันนี้</span></div>
+        <div class="fig"><b id="fVisible">–</b><span>แสดงบนแม่น้ำ</span></div>
+        <div class="fig warn"><a href="#moderate" data-filter="pending"><b id="fPending">–</b><span>รอตรวจ</span></a></div>
+        <div class="fig"><b id="fHidden">–</b><span>ซ่อนแล้ว</span></div>
+        <div class="fig"><b id="fSathu">–</b><span>ยอดสาธุ</span></div>
+      </div>
+      <section>
+        <h3>กระทงที่ลอยใน ๒๔ ชั่วโมงล่าสุด</h3>
+        <svg class="chart" id="chart" role="img" aria-label="กราฟจำนวนกระทงรายชั่วโมง"></svg>
+      </section>
+      <section class="split">
+        <div><h3>ฐานกระทงที่เลือก</h3><div id="byBase"></div></div>
+        <div><h3>ดอกไม้ที่เลือก</h3><div id="byFlower"></div></div>
+      </section>
+    </div>
+
+    <!-- ตรวจกระทง -->
+    <div data-panel="moderate" hidden>
+      <h2>ตรวจกระทง</h2>
+      <p class="lead">ซ่อนหรือลบข้อความที่ไม่เหมาะสม กระทงที่ติดคำต้องห้ามจะรอตรวจก่อนขึ้นแม่น้ำ</p>
+      <div class="tools">
+        <div class="filters" id="filters">
+          <button type="button" data-f="all" aria-pressed="true">ทั้งหมด</button>
+          <button type="button" data-f="pending" aria-pressed="false">รอตรวจ</button>
+          <button type="button" data-f="visible" aria-pressed="false">แสดงอยู่</button>
+          <button type="button" data-f="hidden" aria-pressed="false">ซ่อนแล้ว</button>
+          <button type="button" data-f="flagged" aria-pressed="false">ติดคำต้องห้าม</button>
+        </div>
+        <input class="input search" id="search" type="search" placeholder="ค้นหาชื่อหรือคำอธิษฐาน">
+        <button class="btn btn-line" id="exportBtn" type="button">ส่งออก CSV</button>
+      </div>
+      <button class="newbar" id="newBar" type="button" hidden></button>
+      <div class="bulk" id="bulk" hidden>
+        <span class="grow" id="bulkLbl"></span>
+        <button class="btn btn-line" data-bulk="visible" type="button">แสดง</button>
+        <button class="btn btn-line" data-bulk="hidden" type="button">ซ่อน</button>
+        <button class="btn btn-danger" data-bulk="delete" type="button">ลบ</button>
+      </div>
+      <table>
+        <thead><tr><th><input type="checkbox" id="checkAll" aria-label="เลือกทั้งหมด"></th><th></th><th>ชื่อและคำอธิษฐาน</th><th>เวลา</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="empty" id="rowsEmpty" hidden>ไม่มีกระทงในหมวดนี้</p>
+      <button class="btn btn-line more" id="moreBtn" type="button" hidden>โหลดเพิ่ม</button>
+    </div>
+
+    <!-- ตั้งค่า -->
+    <div data-panel="settings" hidden>
+      <h2>ตั้งค่างาน</h2>
+      <p class="lead">ค่าที่บันทึกจะแสดงที่หน้าเว็บภายในไม่กี่นาที</p>
+      <form class="form" id="settingsForm">
+        <section>
+          <h3>ข้อความบนหน้าเว็บ</h3>
+          <label for="sName">ชื่องาน</label>
+          <input class="input" id="sName" maxlength="60" required>
+          <label for="sTag">คำโปรย</label>
+          <input class="input" id="sTag" maxlength="120">
+          <label for="sAnn">ประกาศ (เว้นว่างถ้าไม่มี)</label>
+          <textarea class="input" id="sAnn" maxlength="200" placeholder="เช่น ขอบคุณทุกคนที่มาร่วมลอยกระทงกับชมรมเรา"></textarea>
+        </section>
+        <section>
+          <h3>การรับกระทง</h3>
+          <label class="switch"><input type="checkbox" id="sOpen"><span><b>เปิดรับกระทง</b><small>ปิดเมื่อจบงาน คนยังเข้ามาดูแม่น้ำได้ แต่ลอยกระทงใหม่ไม่ได้</small></span></label>
+          <label class="switch"><input type="checkbox" id="sApprove"><span><b>ตรวจก่อนขึ้นแม่น้ำ</b><small>ทุกใบจะรอแอดมินกดแสดงก่อน เหมาะกับงานที่ต้องคุมเนื้อหาเข้ม</small></span></label>
+          <div class="row2">
+            <div>
+              <label for="sRate">จำกัดกี่ใบต่อคนใน ๑๐ นาที</label>
+              <input class="input" id="sRate" type="number" min="1" max="100" required>
+            </div>
+          </div>
+        </section>
+        <div class="save-row">
+          <button class="btn btn-main" id="saveBtn" type="submit">บันทึกการตั้งค่า</button>
+          <span class="saved" id="savedMsg" hidden>บันทึกแล้ว</span>
+        </div>
+      </form>
+      <section class="form">
+        <h3>คำต้องห้าม</h3>
+        <p class="lead" style="margin-bottom:0">ถ้าชื่อหรือคำอธิษฐานมีคำเหล่านี้ กระทงจะถูกพักไว้ในหมวด "รอตรวจ" แทนการขึ้นแม่น้ำ</p>
+        <div class="words" id="words"></div>
+        <form class="addword" id="wordForm">
+          <input class="input" id="wordInput" maxlength="60" placeholder="เพิ่มคำ">
+          <button class="btn btn-line" type="submit">เพิ่ม</button>
+        </form>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="js/art.js"></script>
+<script src="js/api.js"></script>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const api = window.LKApi, Art = window.LKArt;
+  const th = (n) => Number(n || 0).toLocaleString("th-TH-u-nu-thai");
+  const COLS = "id,name,wish,base,flower,status,flagged,sathu_count,created_at";
+  const PAGE = 50;
+  let toastT;
+  function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3200); }
+  function show(view) { ["loginView", "setupView", "denyView", "appView"].forEach((v) => ($(v).hidden = v !== view)); }
+  const fmtTime = (iso) => new Date(iso).toLocaleString("th-TH-u-nu-thai", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+  /* =================== ชั้นข้อมูล =================== */
+  function supabaseData(c) {
+    return {
+      async stats() { const { data, error } = await c.rpc("admin_stats"); if (error) throw error; return data; },
+      async list({ filter, q, offset }) {
+        let qq = c.from("krathongs").select(COLS, { count: "exact" }).order("created_at", { ascending: false }).range(offset, offset + PAGE - 1);
+        if (filter === "flagged") qq = qq.eq("flagged", true);
+        else if (filter !== "all") qq = qq.eq("status", filter);
+        const term = (q || "").replace(/[,()%*\\]/g, " ").trim();
+        if (term) qq = qq.or(`wish.ilike.%${term}%,name.ilike.%${term}%`);
+        const { data, error, count } = await qq;
+        if (error) throw error;
+        return { rows: data || [], count: count || 0 };
+      },
+      async setStatus(ids, status) {
+        const patch = status === "visible" ? { status, flagged: false } : { status };
+        const { error } = await c.from("krathongs").update(patch).in("id", ids);
+        if (error) throw error;
+      },
+      async remove(ids) { const { error } = await c.from("krathongs").delete().in("id", ids); if (error) throw error; },
+      async settings() { const { data, error } = await c.from("settings").select("*").eq("id", 1).single(); if (error) throw error; return data; },
+      async saveSettings(s) { const { error } = await c.from("settings").update(s).eq("id", 1); if (error) throw error; },
+      async words() { const { data, error } = await c.from("banned_words").select("word").order("word"); if (error) throw error; return data.map((d) => d.word); },
+      async addWord(w) { const { error } = await c.from("banned_words").insert({ word: w }); if (error && error.code !== "23505") throw error; },
+      async delWord(w) { const { error } = await c.from("banned_words").delete().eq("word", w); if (error) throw error; },
+      async exportAll() {
+        const out = [];
+        for (let from = 0; ; from += 1000) {
+          const { data, error } = await c.from("krathongs").select(COLS).order("created_at", { ascending: true }).range(from, from + 999);
+          if (error) throw error;
+          out.push(...data);
+          if (data.length < 1000) break;
+        }
+        return out;
+      },
+      subscribe(cb) {
+        c.channel("admin-river").on("postgres_changes", { event: "*", schema: "public", table: "krathongs" }, cb).subscribe();
+      },
+    };
+  }
+
+  function demoData() {
+    const S = api.store;
+    const all = () => api.demoAll().map((r) => ({ status: "visible", flagged: false, ...r }));
+    const save = (list) => S.set("lk-demo", list);
+    const defaults = { event_name: "ลอยกระทง", tagline: "ลอยทุกข์ให้ไปกับสายน้ำ ฝากความหวังไว้กับแสงเทียน", announcement: "", is_open: true, require_approval: false, rate_limit: 5 };
+    return {
+      async stats() {
+        const L = all(), day = new Date(); day.setHours(0, 0, 0, 0);
+        const by = (k) => L.reduce((m, r) => ((m[r[k]] = (m[r[k]] || 0) + 1), m), {});
+        const hours = {};
+        L.filter((r) => Date.now() - new Date(r.created_at) < 864e5).forEach((r) => {
+          const h = new Date(r.created_at); h.setMinutes(0, 0, 0); hours[h.toISOString()] = (hours[h.toISOString()] || 0) + 1;
+        });
+        return {
+          total: L.length, visible: L.filter((r) => r.status === "visible").length, pending: L.filter((r) => r.status === "pending").length,
+          hidden: L.filter((r) => r.status === "hidden").length, flagged: L.filter((r) => r.flagged).length,
+          today: L.filter((r) => new Date(r.created_at) >= day).length, sathu: L.reduce((s, r) => s + (r.sathu_count || 0), 0),
+          by_base: by("base"), by_flower: by("flower"), by_hour: Object.entries(hours).map(([h, c]) => ({ h, c })),
+        };
+      },
+      async list({ filter, q, offset }) {
+        let L = all().sort((a, b) => b.created_at.localeCompare(a.created_at));
+        if (filter === "flagged") L = L.filter((r) => r.flagged);
+        else if (filter !== "all") L = L.filter((r) => r.status === filter);
+        if (q) L = L.filter((r) => (r.name + " " + r.wish).toLowerCase().includes(q.toLowerCase()));
+        return { rows: L.slice(offset, offset + PAGE), count: L.length };
+      },
+      async setStatus(ids, status) { const L = all(); L.forEach((r) => { if (ids.includes(r.id)) { r.status = status; if (status === "visible") r.flagged = false; } }); save(L); },
+      async remove(ids) { save(all().filter((r) => !ids.includes(r.id))); },
+      async settings() { return { ...defaults, ...S.get("lk-demo-settings", {}) }; },
+      async saveSettings(s) { S.set("lk-demo-settings", { ...S.get("lk-demo-settings", {}), ...s }); },
+      async words() { return S.get("lk-demo-words", []); },
+      async addWord(w) { const W = S.get("lk-demo-words", []); if (!W.includes(w)) W.push(w); S.set("lk-demo-words", W.sort()); },
+      async delWord(w) { S.set("lk-demo-words", S.get("lk-demo-words", []).filter((x) => x !== w)); },
+      async exportAll() { return all(); },
+      subscribe() {},
+    };
+  }
+
+  /* =================== หน้าหลังบ้าน =================== */
+  let D = null, client = null;
+  const state = { filter: "all", q: "", offset: 0, rows: [], count: 0, selected: new Set(), fresh: 0 };
+
+  function route() {
+    const v = (location.hash || "#overview").slice(1);
+    const view = ["overview", "moderate", "settings"].includes(v) ? v : "overview";
+    document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== view));
+    document.querySelectorAll("nav a").forEach((a) => { if (a.dataset.view !== view) a.removeAttribute("aria-current"); else a.setAttribute("aria-current", "page"); });
+    if (view === "overview") loadStats();
+    if (view === "moderate") loadRows(true);
+    if (view === "settings") loadSettings();
+  }
+  window.addEventListener("hashchange", route);
+  document.querySelectorAll("[data-filter]").forEach((a) => a.addEventListener("click", () => setFilter(a.dataset.filter)));
+
+  /* ---------- ภาพรวม ---------- */
+  async function loadStats() {
+    try {
+      const s = await D.stats();
+      $("fTotal").textContent = th(s.total); $("fToday").textContent = th(s.today); $("fVisible").textContent = th(s.visible);
+      $("fPending").textContent = th(s.pending); $("fHidden").textContent = th(s.hidden); $("fSathu").textContent = th(s.sathu);
+      $("pendingBadge").hidden = !s.pending; $("pendingBadge").textContent = th(s.pending);
+      drawChart(s.by_hour || []);
+      drawBars("byBase", s.by_base || {}, Art.BASES, (id, cv) => Art.thumb(cv, id, "marigold", { t: 1 }));
+      drawBars("byFlower", s.by_flower || {}, Art.FLOWERS, (id, cv) => Art.thumb(cv, "banana", id, { flowerOnly: true }));
+    } catch (e) { toast("โหลดสถิติไม่สำเร็จ"); }
+  }
+  function drawChart(hours) {
+    const svg = $("chart"), W = svg.clientWidth || 800, H = 190, pad = 24;
+    const now = new Date(); now.setMinutes(0, 0, 0);
+    const slots = [];
+    for (let i = 23; i >= 0; i--) { const d = new Date(now - i * 3600e3); slots.push({ d, c: 0 }); }
+    hours.forEach((h) => { const t = new Date(h.h).getTime(); const s = slots.find((x) => x.d.getTime() === t); if (s) s.c = h.c; });
+    const max = Math.max(1, ...slots.map((s) => s.c));
+    const bw = (W - 8) / 24;
+    let out = `<line x1="0" y1="${H - pad}" x2="${W}" y2="${H - pad}" stroke="rgba(243,233,210,.15)"/>`;
+    slots.forEach((s, i) => {
+      const h = ((H - pad - 22) * s.c) / max, x = 4 + i * bw;
+      out += `<rect x="${x + bw * 0.18}" y="${H - pad - h}" width="${bw * 0.64}" height="${Math.max(h, s.c ? 2 : 0)}" rx="2" fill="#f6c26b" opacity="${s.c ? 0.9 : 0}"><title>${s.d.getHours()}:00 น. ${s.c} ใบ</title></rect>`;
+      if (s.c === max && s.c) out += `<text x="${x + bw / 2}" y="${H - pad - h - 6}" fill="#f3e9d2" font-size="12" text-anchor="middle">${th(s.c)}</text>`;
+      if (i % 3 === 0) out += `<text x="${x + bw / 2}" y="${H - 6}" fill="rgba(243,233,210,.45)" font-size="11.5" text-anchor="middle">${th(s.d.getHours())}:๐๐</text>`;
+    });
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = out;
+  }
+  function drawBars(id, counts, names, paint) {
+    const el = $(id); el.innerHTML = "";
+    const max = Math.max(1, ...Object.values(counts));
+    Object.keys(names).sort((a, b) => (counts[b] || 0) - (counts[a] || 0)).forEach((k) => {
+      const row = document.createElement("div"); row.className = "hbar";
+      row.innerHTML = `<canvas></canvas><span></span><div class="track"><div class="fill"></div></div><span class="n"></span>`;
+      row.children[1].textContent = names[k].name;
+      row.querySelector(".fill").style.width = ((100 * (counts[k] || 0)) / max) + "%";
+      row.querySelector(".n").textContent = th(counts[k] || 0);
+      el.appendChild(row);
+      paint(k, row.querySelector("canvas"));
+    });
+  }
+
+  /* ---------- ตรวจกระทง ---------- */
+  function setFilter(f) {
+    state.filter = f;
+    document.querySelectorAll("#filters button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.f === f)));
+    if (location.hash === "#moderate") loadRows(true);
+  }
+  document.querySelectorAll("#filters button").forEach((b) => b.addEventListener("click", () => setFilter(b.dataset.f)));
+  let searchT;
+  $("search").addEventListener("input", (e) => { clearTimeout(searchT); searchT = setTimeout(() => { state.q = e.target.value.trim(); loadRows(true); }, 300); });
+
+  async function loadRows(reset) {
+    if (reset) { state.offset = 0; state.rows = []; state.selected.clear(); state.fresh = 0; $("newBar").hidden = true; }
+    try {
+      const { rows, count } = await D.list(state);
+      state.rows = reset ? rows : state.rows.concat(rows);
+      state.count = count;
+      renderRows();
+    } catch (e) { toast("โหลดรายการไม่สำเร็จ"); }
+  }
+  $("moreBtn").addEventListener("click", () => { state.offset += PAGE; loadRows(false); });
+  $("newBar").addEventListener("click", () => loadRows(true));
+
+  const STATUS = { visible: "แสดงอยู่", pending: "รอตรวจ", hidden: "ซ่อนแล้ว" };
+  function renderRows() {
+    const tb = $("rows"); tb.innerHTML = "";
+    $("rowsEmpty").hidden = state.rows.length > 0;
+    state.rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="c"><input type="checkbox" aria-label="เลือก"></td>
+        <td class="k"><canvas></canvas></td>
+        <td class="w"><div class="who"></div><div class="what"></div></td>
+        <td class="t"><span class="when"></span></td>
+        <td class="s"><span class="st ${r.status}"><i></i>${STATUS[r.status] || r.status}</span>${r.flagged ? '<br><span class="flag">ติดคำต้องห้าม</span>' : ""}</td>
+        <td class="a"><div class="acts"></div></td>`;
+      tr.querySelector(".who").textContent = r.name || "ไม่ระบุชื่อ";
+      if (r.sathu_count) { const sn = document.createElement("span"); sn.className = "sn"; sn.textContent = "สาธุ " + th(r.sathu_count); tr.querySelector(".who").appendChild(sn); }
+      tr.querySelector(".what").textContent = r.wish;
+      tr.querySelector(".when").textContent = fmtTime(r.created_at);
+      const cb = tr.querySelector("input");
+      cb.checked = state.selected.has(r.id);
+      cb.addEventListener("change", () => { cb.checked ? state.selected.add(r.id) : state.selected.delete(r.id); renderBulk(); });
+      const acts = tr.querySelector(".acts");
+      const mk = (label, cls, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "btn " + cls; b.textContent = label; b.addEventListener("click", () => fn(b)); acts.appendChild(b); };
+      if (r.status !== "visible") mk(r.status === "pending" ? "อนุมัติ" : "แสดง", "btn-line", () => act([r.id], "visible"));
+      if (r.status !== "hidden") mk("ซ่อน", "btn-line", () => act([r.id], "hidden"));
+      mk("ลบ", "btn-danger", (b) => {
+        if (b.dataset.armed) return act([r.id], "delete");
+        b.dataset.armed = "1"; b.textContent = "ยืนยันลบ";
+        setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "ลบ"; } }, 3500);
+      });
+      tb.appendChild(tr);
+      Art.thumb(tr.querySelector("canvas"), r.base, r.flower, { t: 1 });
+    });
+    $("moreBtn").hidden = state.rows.length >= state.count;
+    $("checkAll").checked = false;
+    renderBulk();
+  }
+  function renderBulk() {
+    const n = state.selected.size;
+    $("bulk").hidden = n === 0;
+    $("bulkLbl").textContent = `เลือกไว้ ${th(n)} ใบ`;
+  }
+  $("checkAll").addEventListener("change", (e) => {
+    state.rows.forEach((r) => (e.target.checked ? state.selected.add(r.id) : state.selected.delete(r.id)));
+    document.querySelectorAll("#rows input[type=checkbox]").forEach((c) => (c.checked = e.target.checked));
+    renderBulk();
+  });
+  document.querySelectorAll("[data-bulk]").forEach((b) => b.addEventListener("click", () => {
+    const ids = [...state.selected];
+    if (!ids.length) return;
+    if (b.dataset.bulk === "delete" && !b.dataset.armed) {
+      b.dataset.armed = "1"; b.textContent = `ยืนยันลบ ${th(ids.length)} ใบ`;
+      setTimeout(() => { delete b.dataset.armed; b.textContent = "ลบ"; }, 3500);
+      return;
+    }
+    act(ids, b.dataset.bulk);
+  }));
+  async function act(ids, what) {
+    try {
+      if (what === "delete") await D.remove(ids); else await D.setStatus(ids, what);
+      toast({ delete: "ลบแล้ว", visible: "แสดงบนแม่น้ำแล้ว", hidden: "ซ่อนแล้ว" }[what] + (ids.length > 1 ? ` ${th(ids.length)} ใบ` : ""));
+      loadRows(true); loadStatsQuiet();
+    } catch (e) { toast("ทำรายการไม่สำเร็จ ลองอีกครั้ง"); }
+  }
+  async function loadStatsQuiet() {
+    try { const s = await D.stats(); $("pendingBadge").hidden = !s.pending; $("pendingBadge").textContent = th(s.pending); } catch (e) {}
+  }
+
+  $("exportBtn").addEventListener("click", async () => {
+    try {
+      const rows = await D.exportAll();
+      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const head = ["id", "ชื่อ", "คำอธิษฐาน", "ฐาน", "ดอกไม้", "สถานะ", "ติดคำต้องห้าม", "สาธุ", "เวลา"];
+      const lines = [head.map(esc).join(",")].concat(rows.map((r) => [r.id, r.name, r.wish, (Art.BASES[r.base] || {}).name, (Art.FLOWERS[r.flower] || {}).name,
+        STATUS[r.status] || r.status, r.flagged ? "ใช่" : "", r.sathu_count, new Date(r.created_at).toLocaleString("th-TH")].map(esc).join(",")));
+      const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = `krathong-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      toast(`ส่งออก ${th(rows.length)} แถวแล้ว`);
+    } catch (e) { toast("ส่งออกไม่สำเร็จ"); }
+  });
+
+  /* ---------- ตั้งค่า ---------- */
+  async function loadSettings() {
+    try {
+      const s = await D.settings();
+      $("sName").value = s.event_name || ""; $("sTag").value = s.tagline || ""; $("sAnn").value = s.announcement || "";
+      $("sOpen").checked = !!s.is_open; $("sApprove").checked = !!s.require_approval; $("sRate").value = s.rate_limit || 5;
+      $("eventLbl").textContent = s.event_name || "";
+      renderWords(await D.words());
+    } catch (e) { toast("โหลดการตั้งค่าไม่สำเร็จ"); }
+  }
+  $("settingsForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("saveBtn").disabled = true;
+    try {
+      await D.saveSettings({
+        event_name: $("sName").value.trim() || "ลอยกระทง", tagline: $("sTag").value.trim(), announcement: $("sAnn").value.trim(),
+        is_open: $("sOpen").checked, require_approval: $("sApprove").checked, rate_limit: Math.max(1, Math.min(100, parseInt($("sRate").value, 10) || 5)),
+      });
+      $("eventLbl").textContent = $("sName").value.trim();
+      $("savedMsg").hidden = false; setTimeout(() => ($("savedMsg").hidden = true), 2500);
+    } catch (err) { toast("บันทึกไม่สำเร็จ ตรวจข้อมูลแล้วลองอีกครั้ง"); }
+    $("saveBtn").disabled = false;
+  });
+  function renderWords(list) {
+    const el = $("words"); el.innerHTML = "";
+    if (!list.length) { el.innerHTML = '<span style="color:var(--faint);font-size:14px">ยังไม่มีคำต้องห้าม</span>'; return; }
+    list.forEach((w) => {
+      const s = document.createElement("span"); s.className = "word";
+      s.textContent = w;
+      const b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-label", "ลบคำ " + w);
+      b.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><path d="M1 1l8 8M9 1L1 9"/></svg>';
+      b.addEventListener("click", async () => { try { await D.delWord(w); renderWords(await D.words()); } catch (e) { toast("ลบคำไม่สำเร็จ"); } });
+      s.appendChild(b); el.appendChild(s);
+    });
+  }
+  $("wordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const w = $("wordInput").value.trim();
+    if (!w) return;
+    try { await D.addWord(w); $("wordInput").value = ""; renderWords(await D.words()); } catch (err) { toast("เพิ่มคำไม่สำเร็จ"); }
+  });
+
+  /* =================== เข้าสู่ระบบ =================== */
+  async function enterApp(data, label) {
+    D = data;
+    show("appView");
+    try { const s = await D.settings(); $("eventLbl").textContent = label || s.event_name || ""; } catch (e) {}
+    let t;
+    D.subscribe((p) => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (location.hash === "#moderate" && p.eventType === "INSERT") {
+          state.fresh++;
+          $("newBar").textContent = `มีกระทงใหม่ ${th(state.fresh)} ใบ แตะเพื่อโหลด`;
+          $("newBar").hidden = false;
+        }
+        if (!location.hash || location.hash === "#overview") loadStats(); else loadStatsQuiet();
+      }, 600);
+    });
+    route();
+    loadStatsQuiet();
+  }
+
+  async function checkSession() {
+    const { data } = await client.auth.getSession();
+    const session = data && data.session;
+    if (!session) { show("loginView"); return; }
+    const uid = session.user.id;
+    const { data: me } = await client.from("admins").select("user_id").eq("user_id", uid).maybeSingle();
+    if (!me) {
+      $("denyEmail").textContent = session.user.email;
+      $("denySql").textContent = `insert into public.admins (user_id) values ('${uid}');`;
+      show("denyView"); return;
+    }
+    enterApp(supabaseData(client), session.user.email);
+  }
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("loginBtn").disabled = true; $("loginMsg").hidden = true;
+    const { error } = await client.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+    $("loginBtn").disabled = false;
+    if (error) {
+      $("loginMsg").textContent = /invalid/i.test(error.message) ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง" : "เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+      $("loginMsg").hidden = false; return;
+    }
+    checkSession();
+  });
+  async function logout() { await client.auth.signOut(); location.hash = ""; show("loginView"); }
+  $("denyOut").addEventListener("click", logout);
+  $("logoutBtn").addEventListener("click", () => { if (client) logout(); else { location.hash = ""; show("setupView"); } });
+  $("demoBtn").addEventListener("click", () => enterApp(demoData(), "โหมดตัวอย่าง"));
+
+  (async () => {
+    if (!api.configured) { show("setupView"); return; }
+    try { client = await api.client({ auth: true }); await checkSession(); }
+    catch (e) { show("loginView"); $("loginMsg").textContent = "เชื่อมต่อ Supabase ไม่ได้ ตรวจค่าใน config.js"; $("loginMsg").hidden = false; }
+  })();
+})();
+</script>
+</body>
+</html>
