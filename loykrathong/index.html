@@ -476,11 +476,11 @@
 
 <div class="toast lg" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795114326"></script>
-<script src="js/art.js?v=1795114326"></script>
-<script src="js/api.js?v=1795114326"></script>
-<script src="js/river.js?v=1795114326"></script>
-<script src="js/siamsi.js?v=1795114326"></script>
+<script src="config.js?v=1795115166"></script>
+<script src="js/art.js?v=1795115166"></script>
+<script src="js/api.js?v=1795115166"></script>
+<script src="js/river.js?v=1795115166"></script>
+<script src="js/siamsi.js?v=1795115166"></script>
 <script>
 (() => {
   "use strict";
@@ -596,18 +596,34 @@
   }
 
   /* ---------- ชื่องานพอดีบรรทัดเดียว ---------- */
+  const titleCtx = document.createElement("canvas").getContext("2d");
   function fitTitle() {
     const t = $("title");
-    t.style.fontSize = "";
+    t.style.fontSize = ""; t.style.paddingTop = "";
     const max = parseFloat(getComputedStyle(t).fontSize);
     const left = t.getBoundingClientRect().left;
     const portrait = window.innerWidth / window.innerHeight < 0.8;
     const avail = portrait ? window.innerWidth - left * 2 : Math.min(window.innerWidth * 0.62 - left, 900);
     const need = t.scrollWidth;
     if (need > avail) t.style.fontSize = Math.max(28, Math.floor(max * (avail / need))) + "px";
+    // หางตัวอักษรสูง ๆ ในฟอนต์ Charm (เช่น ไ ใน "ออนไลน์") สูงเกินบรรทัด วัดจริงแล้วเว้นที่ด้านบนให้พอ ไม่ให้ทะลุขอบจอ
+    try {
+      const cs = getComputedStyle(t), fs = parseFloat(cs.fontSize);
+      titleCtx.font = `700 ${fs}px Charm, serif`;
+      const m = titleCtx.measureText(t.textContent || "");
+      const asc = m.actualBoundingBoxAscent, fAsc = m.fontBoundingBoxAscent, fDesc = m.fontBoundingBoxDescent;
+      if (!asc || !fAsc) return;
+      const lineH = parseFloat(cs.lineHeight) || fs * 1.3;
+      const pt = parseFloat(cs.paddingTop) || 0;
+      const boxTop = t.offsetParent.getBoundingClientRect().top + t.offsetTop;
+      const glyphTop = boxTop + pt + (lineH - (fAsc + fDesc)) / 2 + fAsc - asc;
+      const margin = Math.max(10, fs * 0.08);
+      if (glyphTop < margin) t.style.paddingTop = Math.ceil(pt + margin - glyphTop) + "px";
+    } catch (e) {}
   }
   window.addEventListener("resize", fitTitle);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
+  if (document.fonts && document.fonts.load) document.fonts.load('700 60px Charm', "ลอยกระทงออนไลน์").then(fitTitle).catch(() => {});
 
   /* ---------- การ์ดคำอธิษฐาน ---------- */
   let slipRec = null;
