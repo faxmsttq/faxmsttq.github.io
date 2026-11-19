@@ -142,6 +142,29 @@
   .empty{padding:40px 8px;text-align:center;color:var(--moon-dim)}
 
 
+
+  .vis-switch{display:flex;align-items:flex-start;gap:12px;margin-top:14px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);cursor:pointer}
+  .vis-switch input{appearance:none;width:42px;height:24px;border-radius:999px;background:rgba(243,233,210,.18);position:relative;flex:none;margin-top:2px;cursor:pointer;transition:background .2s}
+  .vis-switch input::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--moon);transition:transform .2s}
+  .vis-switch input:checked{background:var(--candle)}
+  .vis-switch input:checked::after{transform:translateX(18px);background:#1b1f33}
+  .vis-switch b{display:block;font-weight:600;font-size:15px}
+  .vis-switch small{display:block;font-size:13px;color:var(--moon-dim);line-height:1.5}
+  .lucky-note{margin-top:12px;font-size:14px;color:var(--candle)}
+  .tabs{display:flex;gap:6px;margin:0 26px 6px}
+  .tab{padding:7px 14px;border-radius:999px;border:1px solid var(--line);font-size:14px;color:var(--moon-dim)}
+  .tab[aria-selected="true"]{border-color:var(--candle);color:var(--moon);background:rgba(246,194,107,.08)}
+  .w-tag{display:inline-block;margin-left:8px;font-size:12px;color:var(--moon-dim);border:1px solid var(--line);border-radius:999px;padding:0 8px;font-weight:400}
+  .topics{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 4px}
+  .topic{font-size:13.5px;padding:6px 13px;border-radius:999px;border:1px solid rgba(243,233,210,.16);color:var(--moon-dim)}
+  .topic[aria-checked="true"]{border-color:var(--candle);color:var(--moon);background:rgba(246,194,107,.1)}
+  .fortune dl .focus{background:rgba(246,194,107,.28);border-radius:8px;padding:2px 8px;margin:0 -8px}
+  .fortune dt.focus small{display:block;font-weight:500;font-size:11.5px;color:#5a2e12}
+  .history{margin-top:22px}
+  .history h3{font-size:15px;font-weight:600;margin-bottom:6px}
+  .history ul{list-style:none}
+  .history li button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 2px;border-bottom:1px solid var(--line);font-size:14.5px}
+  .history li span{color:var(--moon-dim);font-size:13px;flex:none}
   /* ---------- เซียมซี ---------- */
   .siamsi-stage{display:block;width:100%;height:330px;border-radius:14px;margin:8px 0 4px;background:#0d1530}
   .siamsi-hint{font-size:14px;color:var(--moon-dim);text-align:center;margin-top:6px}
@@ -214,9 +237,9 @@
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 8.5h8l-1 9H7z"/><path d="M8.5 8.5 7.5 2.5M10.2 8.5V1.8M12 8.5l1.2-5.6"/></svg>
       <span class="lbl">เซียมซี</span>
     </button>
-    <button class="btn-text" id="wishesBtn" type="button" aria-label="กระทงของฉัน">
+    <button class="btn-text" id="wishesBtn" type="button" aria-label="คำอธิษฐาน">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 3.5h9.5L16 6v10.5H4z"/><path d="M7 8h6M7 11h6M7 14h3.5"/></svg>
-      <span class="lbl">กระทงของฉัน</span>
+      <span class="lbl">คำอธิษฐาน</span>
     </button>
     <button class="btn-text" id="shareBtn" type="button" aria-label="ชวนเพื่อนมาลอย">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8.5 11.5l3-3M7 9.5l-1.6 1.6a2.8 2.8 0 0 0 4 4L11 13.5M13 10.5l1.6-1.6a2.8 2.8 0 0 0-4-4L9 6.5"/></svg>
@@ -266,6 +289,8 @@
       <textarea class="input" id="wish" maxlength="140" placeholder="ขอให้…"></textarea>
       <div class="counter"><span id="wishCount">๐</span>/๑๔๐</div>
       <div class="chips" id="chips"></div>
+      <label class="vis-switch"><input type="checkbox" id="isPublic"><span><b id="visTitle">เก็บคำอธิษฐานเป็นความลับ</b><small id="visSub">เปิดสวิตช์ถ้าอยากให้คนอื่นแตะกระทงแล้วอ่านคำอธิษฐานของคุณได้</small></span></label>
+      <p class="lucky-note" id="luckyNote" hidden>เซียมซีบอกว่าดวงคุณดีมาก กระทงใบนี้จะมีประกายทองให้ทุกคนเห็น</p>
       <label class="field" for="name">ชื่อที่แสดง (เว้นว่างได้)</label>
       <input class="input" id="name" maxlength="30" autocomplete="nickname" placeholder="ไม่ระบุชื่อ">
     </section>
@@ -276,41 +301,47 @@
       <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 0C4 4.5 2 7.2 2 10.6A5 5 0 0 0 12 10.6C12 7.2 10 4.5 7 0Z" fill="#b5541b"/><path d="M7 6c-1.4 2-2.3 3.4-2.3 5a2.3 2.3 0 0 0 4.6 0C9.3 9.4 8.4 8 7 6Z" fill="#fff3cf"/></svg>
       <span id="floatLbl">ลอยกระทง</span>
     </button>
-    <p class="foot-note">ชื่อจะลอยบนกระทงให้ทุกคนเห็น ส่วนคำอธิษฐานเป็นความลับ เห็นเฉพาะคุณและผู้ดูแลที่คัดกรองข้อความ</p>
+    <p class="foot-note">ชื่อจะลอยบนกระทงให้ทุกคนเห็น ผู้ดูแลเห็นคำอธิษฐานทุกใบเพื่อคัดกรองข้อความ</p>
   </div>
 </aside>
 
 <aside class="sheet" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
   <div class="sheet-head">
-    <div><h2 id="drawerTitle">กระทงของฉัน</h2><p id="drawerSub">คำอธิษฐานของคุณเห็นได้เฉพาะในเครื่องนี้</p></div>
+    <div><h2 id="drawerTitle">คำอธิษฐาน</h2><p id="drawerSub">กระทงของคุณ และคำอธิษฐานที่เจ้าของเปิดให้อ่าน</p></div>
     <button class="x" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabMine" aria-selected="true" type="button">กระทงของฉัน</button>
+    <button class="tab" role="tab" id="tabPublic" aria-selected="false" type="button">เปิดให้อ่าน</button>
   </div>
   <div class="sheet-body"><ul class="wishes" id="wishes"></ul></div>
 </aside>
 
 <aside class="sheet" id="siamsi" role="dialog" aria-modal="true" aria-labelledby="siamsiTitle">
   <div class="sheet-head">
-    <div><h2 id="siamsiTitle">เสี่ยงเซียมซี</h2><p>ตั้งจิตนึกถึงเรื่องที่อยากรู้ แล้วเขย่ากระบอก</p></div>
+    <div><h2 id="siamsiTitle">เสี่ยงเซียมซี</h2><p>เลือกเรื่องที่อยากถาม ตั้งจิต แล้วเขย่ากระบอก</p></div>
     <button class="x" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
   </div>
   <div class="sheet-body" id="siamsiBody">
+    <div class="topics" id="topics" role="radiogroup" aria-label="เรื่องที่อยากถาม"></div>
     <canvas class="siamsi-stage" id="siamsiCanvas" aria-hidden="true"></canvas>
-    <p class="siamsi-hint" id="siamsiHint">กดปุ่มด้านล่าง หรือเขย่ามือถือ</p>
-    <article class="fortune" id="fortune" hidden aria-live="polite">
+    <p class="siamsi-hint" id="siamsiHint" aria-live="polite"></p>
+    <article class="fortune" id="fortune" hidden>
       <div class="fortune-head"><h3 class="fortune-no" id="fNo"></h3><span class="fortune-lv" id="fLv"></span></div>
       <p class="fortune-verse" id="fVerse"></p>
-      <dl>
-        <dt>การงาน การเรียน</dt><dd id="fWork"></dd>
-        <dt>ความรัก</dt><dd id="fLove"></dd>
-        <dt>การเงิน</dt><dd id="fMoney"></dd>
-        <dt>สุขภาพ</dt><dd id="fHealth"></dd>
-      </dl>
+      <dl id="fRows"></dl>
       <p class="fortune-tip"><b>คำแนะนำ</b> <span id="fTip"></span></p>
+      <p class="fortune-tip" id="fLucky" hidden><b>ดวงดีมาก</b> ลอยกระทงภายใน ๑ ชั่วโมง กระทงของคุณจะมีประกายทองให้ทุกคนเห็น</p>
       <div class="fortune-actions">
-        <button class="paper-btn" id="fCopy" type="button">คัดลอกคำทำนาย</button>
+        <button class="paper-btn" id="fStory" type="button">บันทึกรูปไปแชร์</button>
+        <button class="paper-btn" id="fCopy" type="button">คัดลอก</button>
         <button class="paper-btn" id="fFloat" type="button">ลอยกระทงขอพรต่อ</button>
       </div>
     </article>
+    <section class="history" id="history" hidden>
+      <h3>สมุดเซียมซีของฉัน</h3>
+      <ul id="historyList"></ul>
+    </section>
   </div>
   <div class="sheet-foot">
     <button class="btn-primary" id="shakeBtn" type="button"><span id="shakeLbl">เขย่าเซียมซี</span></button>
@@ -320,11 +351,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795108669"></script>
-<script src="js/art.js?v=1795108669"></script>
-<script src="js/api.js?v=1795108669"></script>
-<script src="js/river.js?v=1795108669"></script>
-<script src="js/siamsi.js?v=1795108669"></script>
+<script src="config.js?v=1795109582"></script>
+<script src="js/art.js?v=1795109582"></script>
+<script src="js/api.js?v=1795109582"></script>
+<script src="js/river.js?v=1795109582"></script>
+<script src="js/siamsi.js?v=1795109582"></script>
 <script>
 (() => {
   "use strict";
@@ -361,34 +392,42 @@
 
   let listT;
   function renderListSoon() { clearTimeout(listT); listT = setTimeout(renderList, 120); }
+  let listTab = "mine";
+  $("tabMine").addEventListener("click", () => { listTab = "mine"; renderList(); });
+  $("tabPublic").addEventListener("click", () => { listTab = "public"; renderList(); });
   function renderList() {
+    $("tabMine").setAttribute("aria-selected", String(listTab === "mine"));
+    $("tabPublic").setAttribute("aria-selected", String(listTab === "public"));
     const ul = $("wishes");
     ul.innerHTML = "";
-    const list = api.mine();
+    const list = listTab === "mine"
+      ? api.mine().map((r) => ({ ...r, sathu_count: (all.get(r.id) || r).sathu_count || 0 }))
+      : sorted().filter((r) => r.public_wish).slice(0, 150);
     if (!list.length) {
       const li = document.createElement("li"); li.className = "empty";
-      li.textContent = "คุณยังไม่ได้ลอยกระทงจากเครื่องนี้ ประดิษฐ์ใบแรกได้เลย";
+      li.textContent = listTab === "mine" ? "คุณยังไม่ได้ลอยกระทงจากเครื่องนี้ ประดิษฐ์ใบแรกได้เลย" : "ยังไม่มีใครเปิดให้อ่านคำอธิษฐาน";
       ul.appendChild(li); return;
     }
-    list.forEach((r) => {
-      const live = all.get(r.id);
-      const rec = { ...r, sathu_count: live ? live.sathu_count : (r.sathu_count || 0) };
+    list.forEach((rec) => {
       const li = document.createElement("li");
       const b = document.createElement("button"); b.type = "button";
       b.innerHTML = '<div class="w-top"><span class="w-name"></span><span class="w-time"></span></div><p class="w-wish"></p>';
       b.querySelector(".w-name").textContent = displayName(rec);
+      if (listTab === "mine") {
+        const tg = document.createElement("span"); tg.className = "w-tag"; tg.textContent = rec.is_public ? "เปิดให้อ่าน" : "ความลับ";
+        b.querySelector(".w-name").appendChild(tg);
+      }
       b.querySelector(".w-time").textContent = timeAgo(rec.created_at);
-      b.querySelector(".w-wish").textContent = rec.wish;
+      b.querySelector(".w-wish").textContent = listTab === "mine" ? rec.wish : rec.public_wish;
       if (rec.sathu_count > 0) {
-        const p = document.createElement("p"); p.className = "w-sathu"; p.textContent = "มีคนร่วมสาธุ " + th(rec.sathu_count) + " คน";
+        const p = document.createElement("p"); p.className = "w-sathu"; p.textContent = "สาธุ " + th(rec.sathu_count);
         b.appendChild(p);
       }
-      b.addEventListener("click", () => { closeSheets(); river.focus(rec.id); openSlip(rec, null); });
+      b.addEventListener("click", () => { closeSheets(); river.focus(rec.id); openSlip(all.get(rec.id) || rec, null); });
       li.appendChild(b); ul.appendChild(li);
     });
   }
 
-  /* ---------- ป้ายชื่อเวลาเอาเมาส์ชี้ ---------- */
   river.onHover = null;
   river.mine = mine;
 
@@ -415,8 +454,9 @@
     $("tag").hidden = true;
     $("slipName").textContent = displayName(rec);
     const own = api.myRec(rec.id);
-    $("slipWish").classList.toggle("secret", !own);
-    $("slipWish").textContent = own ? own.wish : "คำอธิษฐานของกระทงใบนี้เป็นความลับระหว่างเจ้าของกับสายน้ำ ร่วมส่งพรให้ได้ด้วยการกดสาธุ";
+    const readable = own ? own.wish : rec.public_wish;
+    $("slipWish").classList.toggle("secret", !readable);
+    $("slipWish").textContent = readable || "คำอธิษฐานของกระทงใบนี้เป็นความลับระหว่างเจ้าของกับสายน้ำ ร่วมส่งพรให้ได้ด้วยการกดสาธุ";
     const b = Art.BASES[rec.base] || Art.BASES.banana, f = Art.FLOWERS[rec.flower] || Art.FLOWERS.marigold;
     const ago = timeAgo(rec.created_at);
     $("slipMeta").textContent = "กระทง" + b.name + " ประดับ" + f.name + "\n" + (ago === "เมื่อสักครู่" ? "ลอยเมื่อสักครู่" : "ลอยเมื่อ " + ago);
@@ -504,6 +544,15 @@
   function updateWishCount() { $("wishCount").textContent = th($("wish").value.length); }
   $("wish").addEventListener("input", updateWishCount);
   $("name").value = api.store.get("lk-name", "");
+  $("isPublic").checked = !!api.store.get("lk-public", false);
+  function syncVis() {
+    const on = $("isPublic").checked;
+    $("visTitle").textContent = on ? "ให้คนอื่นอ่านคำอธิษฐานได้" : "เก็บคำอธิษฐานเป็นความลับ";
+    $("visSub").textContent = on ? "ใครแตะกระทงของคุณจะอ่านคำอธิษฐานนี้ได้" : "เปิดสวิตช์ถ้าอยากให้คนอื่นแตะกระทงแล้วอ่านคำอธิษฐานของคุณได้";
+  }
+  $("isPublic").addEventListener("change", () => { api.store.set("lk-public", $("isPublic").checked); syncVis(); });
+  syncVis();
+  const isLucky = () => Date.now() - (api.store.get("lk-lucky", 0) || 0) < 3600e3;
 
   let previewRAF = 0, lastFocus = null;
   function previewLoop(now) {
@@ -517,6 +566,7 @@
     $("scrim").classList.add("show");
     if (id === "maker") {
       $("makeErr").hidden = true;
+      $("luckyNote").hidden = !isLucky();
       requestAnimationFrame(() => { syncMaker(); cancelAnimationFrame(previewRAF); previewRAF = requestAnimationFrame(previewLoop); });
       setTimeout(() => $("wish").focus({ preventScroll: true }), 420);
     } else if (id === "siamsi") {
@@ -531,7 +581,7 @@
     document.querySelectorAll(".sheet.open").forEach((s) => s.classList.remove("open"));
     $("scrim").classList.remove("show");
     cancelAnimationFrame(previewRAF);
-    if (canister) canister.stop();
+    if (stage) stage.stop();
     window.removeEventListener("devicemotion", onMotion);
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
@@ -562,7 +612,9 @@
     floating = true; $("floatBtn").disabled = true; $("floatLbl").textContent = "กำลังลอย…";
     api.store.set("lk-name", name);
     try {
-      const rec = await api.float({ name, wish, base: pick.base, flower: pick.flower });
+      const lucky = isLucky();
+      const rec = await api.float({ name, wish, base: pick.base, flower: pick.flower, is_public: $("isPublic").checked, lucky });
+      if (lucky) api.store.set("lk-lucky", 0);
       mine.add(rec.id); api.store.set("lk-mine", [...mine].slice(-100));
       const pending = settings && settings.require_approval;
       if (!all.has(rec.id)) { all.set(rec.id, rec); if (!pending) total++; }
@@ -588,80 +640,177 @@
 
   /* ---------- เซียมซี ---------- */
   const S = window.LKSiamsi;
-  let canister = null, drawing = false, current = null;
+  let stage = null, phase = "ready", busy = false, current = null, picked = 0, fails = 0;
+  let topic = api.store.get("lk-topic", "overall");
   if (paper) $("fortune").style.backgroundImage = `url(${paper})`;
+  Object.entries(S.TOPICS).forEach(([k, label]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "topic"; b.setAttribute("role", "radio"); b.dataset.k = k; b.textContent = label;
+    b.addEventListener("click", () => { if (busy) return; topic = k; api.store.set("lk-topic", k); syncTopics(); });
+    $("topics").appendChild(b);
+  });
+  function syncTopics() { document.querySelectorAll("#topics .topic").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.k === topic))); }
+  syncTopics();
+  const canMotion = "DeviceMotionEvent" in window && typeof DeviceMotionEvent.requestPermission !== "function" && matchMedia("(pointer:coarse)").matches;
+  function hint(t) { $("siamsiHint").textContent = t; }
+  function setBtn(label, disabled) { $("shakeLbl").textContent = label; $("shakeBtn").disabled = !!disabled; }
+
   function openSiamsi() {
-    if (!canister) canister = new S.Canister($("siamsiCanvas"));
-    if (!drawing) { canister.reset(); }
-    canister.start();
-    const canMotion = "DeviceMotionEvent" in window && typeof DeviceMotionEvent.requestPermission !== "function" && matchMedia("(pointer:coarse)").matches;
-    $("siamsiHint").textContent = canMotion ? "กดปุ่มด้านล่าง หรือเขย่ามือถือ" : "ตั้งจิตอธิษฐาน แล้วกดปุ่มด้านล่าง";
+    if (!stage) { stage = new S.Stage($("siamsiCanvas")); stage.onSound = sfx; }
+    stage.start();
+    if (!busy && phase === "ready") hint(canMotion ? "กดปุ่มด้านล่าง หรือเขย่ามือถือ" : "ตั้งจิตอธิษฐาน แล้วกดปุ่มด้านล่าง");
     if (canMotion) window.addEventListener("devicemotion", onMotion);
+    renderHistory();
   }
   let lastShakeAt = 0;
   function onMotion(e) {
     const a = e.accelerationIncludingGravity || e.acceleration;
     if (!a) return;
     const m = Math.sqrt((a.x || 0) ** 2 + (a.y || 0) ** 2 + (a.z || 0) ** 2);
-    if (m > 24 && Date.now() - lastShakeAt > 1500) { lastShakeAt = Date.now(); drawFortune(); }
+    if (m > 24 && Date.now() - lastShakeAt > 1500 && !busy && (phase === "ready" || phase === "again")) { lastShakeAt = Date.now(); primary(); }
   }
-  function clacks() {
+
+  function ensureAudio() {
+    if (!ac) setupAudio();
+    ac.resume();
+    if (!soundOn) { master.out.gain.cancelScheduledValues(ac.currentTime); master.out.gain.setTargetAtTime(0.9, ac.currentTime, 0.01); }
+  }
+  function quietLater(sec) { if (!soundOn && ac) master.out.gain.setTargetAtTime(0, ac.currentTime + sec, 0.3); }
+  function knock(t, freq, vol, len) {
+    const n = Math.floor(ac.sampleRate * len), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
+    for (let j = 0; j < n; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / n, 4);
+    const src = ac.createBufferSource(); src.buffer = b;
+    const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 5;
+    const g = ac.createGain(); g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(master.bus); src.start(t);
+  }
+  function rattle() {
+    try { ensureAudio(); const t0 = ac.currentTime + 0.02; for (let i = 0; i < 13; i++) knock(t0 + i * 0.12 + Math.random() * 0.05, 1400 + Math.random() * 1400, 0.5, 0.035); quietLater(3.5); } catch (e) {}
+  }
+  function sfx(type, v) {
     try {
-      if (!ac) setupAudio();
-      ac.resume();
-      if (!soundOn) master.out.gain.setTargetAtTime(0.9, ac.currentTime, 0.01);
-      const t0 = ac.currentTime + 0.02;
-      for (let i = 0; i < 14; i++) {
-        const t = t0 + i * 0.12 + Math.random() * 0.05;
-        const len = Math.floor(ac.sampleRate * 0.035), b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0);
-        for (let j = 0; j < len; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / len, 4);
-        const src = ac.createBufferSource(); src.buffer = b;
-        const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1400 + Math.random() * 1400; f.Q.value = 6;
-        const g = ac.createGain(); g.gain.value = 0.5;
-        src.connect(f); f.connect(g); g.connect(master.bus); src.start(t);
-      }
-      if (!soundOn) master.out.gain.setTargetAtTime(0, t0 + 2.4, 0.3);
+      ensureAudio();
+      if (type === "tok") knock(ac.currentTime, 900 + Math.random() * 300, 0.7 * v, 0.06);
+      else { knock(ac.currentTime, 520, 0.9, 0.09); knock(ac.currentTime + 0.05, 640, 0.6, 0.07); }
+      quietLater(1.5);
     } catch (e) {}
   }
-  function drawFortune() {
-    if (drawing) return;
-    drawing = true;
-    $("shakeBtn").disabled = true; $("shakeLbl").textContent = "กำลังเขย่า…";
-    $("fortune").hidden = true;
-    const n = S.randomNumber();
-    current = S.FORTUNES[n - 1];
-    clacks();
-    if (navigator.vibrate) { try { navigator.vibrate([40, 60, 40, 60, 40]); } catch (e) {} }
-    canister.reset();
-    canister.shake(n, () => { if (soundOn) chime(1); }, () => {
-      setTimeout(() => {
-        showFortune(current);
-        drawing = false;
-        $("shakeBtn").disabled = false; $("shakeLbl").textContent = "เสี่ยงใหม่";
-      }, 350);
-    });
-    api.logSiamsi(n).catch(() => {});
+
+  async function primary() {
+    if (busy) return;
+    if (phase === "ready" || phase === "again" || phase === "done") return shakeFlow();
+    if (phase === "picked" || phase === "laugh") return poeFlow();
   }
-  function showFortune(f) {
+  async function shakeFlow() {
+    busy = true; setBtn("กำลังเขย่า…", true);
+    $("fortune").hidden = true;
+    stage.reset();
+    hint("กำลังเขย่ากระบอก…");
+    rattle();
+    if (navigator.vibrate) { try { navigator.vibrate([40, 60, 40, 60, 40]); } catch (e) {} }
+    await stage.shake();
+    picked = S.randomNumber();
+    await stage.eject(picked);
+    hint(`ไม้หมายเลข ${th(picked)} หล่นออกมา โยนไม้ปวยถามว่าใช่ใบนี้ไหม`);
+    phase = "picked"; busy = false; setBtn("โยนไม้ปวย");
+  }
+  async function poeFlow() {
+    busy = true; setBtn("กำลังโยน…", true);
+    const pYes = [0.55, 0.7, 1][Math.min(fails, 2)];
+    const r = Math.random();
+    const result = r < pYes ? "yes" : r < pYes + (1 - pYes) / 2 ? "no" : "laugh";
+    stage.clearPoe();
+    await stage.throwPoe(result);
+    busy = false;
+    if (result === "yes") {
+      fails = 0;
+      hint("หงายหนึ่ง คว่ำหนึ่ง แปลว่าใช่ใบนี้");
+      current = S.FORTUNES[picked - 1];
+      showFortune(current, topic, true);
+      phase = "done"; setBtn("เสี่ยงใหม่");
+      if (soundOn) chime(3);
+      api.logSiamsi(picked).catch(() => {});
+    } else if (result === "no") {
+      fails++;
+      hint("คว่ำทั้งคู่ แปลว่ายังไม่ใช่ใบนี้ ลองเขย่าใหม่");
+      phase = "again"; setBtn("เขย่าใหม่");
+    } else {
+      fails++;
+      hint("หงายทั้งคู่ ไม้ปวยหัวเราะ ลองโยนอีกครั้ง");
+      phase = "laugh"; setBtn("โยนไม้ปวยอีกครั้ง");
+    }
+  }
+  function showFortune(f, tp, fresh) {
+    current = f;
     $("fNo").textContent = "ใบที่ " + th(f.n);
     $("fLv").textContent = f.level; $("fLv").className = "fortune-lv lv" + f.lv;
     $("fVerse").textContent = f.verse;
-    $("fWork").textContent = f.work; $("fLove").textContent = f.love;
-    $("fMoney").textContent = f.money; $("fHealth").textContent = f.health;
+    const keys = ["work", "love", "money", "health"];
+    const order = tp && tp !== "overall" ? [tp].concat(keys.filter((k) => k !== tp)) : keys;
+    const dl = $("fRows"); dl.innerHTML = "";
+    order.forEach((k, i) => {
+      const focus = i === 0 && tp && tp !== "overall";
+      const dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = S.TOPICS[k]; dd.textContent = f[k];
+      if (focus) { dt.className = dd.className = "focus"; const sm = document.createElement("small"); sm.textContent = "เรื่องที่ถาม"; dt.appendChild(sm); }
+      dl.append(dt, dd);
+    });
     $("fTip").textContent = f.tip;
+    $("fLucky").hidden = !(fresh && f.lv === 4);
+    $("fFloat").textContent = fresh && f.lv === 4 ? "ลอยกระทงประกายทอง" : "ลอยกระทงขอพรต่อ";
     const el = $("fortune");
+    el.dataset.topic = tp || "overall";
     el.hidden = false; el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
     setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
-    api.store.set("lk-siamsi-last", { n: f.n, t: Date.now() });
+    if (fresh) {
+      if (f.lv === 4) api.store.set("lk-lucky", Date.now());
+      const H = api.store.get("lk-siamsi-history", []);
+      H.unshift({ n: f.n, topic: tp || "overall", t: Date.now() });
+      api.store.set("lk-siamsi-history", H.slice(0, 50));
+      renderHistory();
+    }
+  }
+  function renderHistory() {
+    const H = api.store.get("lk-siamsi-history", []);
+    $("history").hidden = !H.length;
+    const ul = $("historyList"); ul.innerHTML = "";
+    H.forEach((h) => {
+      const f = S.FORTUNES[h.n - 1]; if (!f) return;
+      const li = document.createElement("li"), b = document.createElement("button");
+      b.type = "button";
+      b.textContent = `ใบที่ ${th(f.n)} ${f.level}  เรื่อง${S.TOPICS[h.topic] || "ภาพรวม"}`;
+      const sp = document.createElement("span");
+      sp.textContent = new Date(h.t).toLocaleDateString("th-TH-u-nu-thai", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      b.appendChild(sp);
+      b.addEventListener("click", () => showFortune(f, h.topic, false));
+      li.appendChild(b); ul.appendChild(li);
+    });
   }
   $("siamsiBtn").addEventListener("click", () => openSheet("siamsi"));
-  $("shakeBtn").addEventListener("click", drawFortune);
+  $("shakeBtn").addEventListener("click", primary);
+  const siteUrl = () => location.href.split("#")[0].split("?")[0].replace(/index\.html$/, "");
   $("fCopy").addEventListener("click", async () => {
     if (!current) return;
     const f = current;
-    const text = `เซียมซีใบที่ ${th(f.n)} (${f.level})\n"${f.verse}"\nการงาน การเรียน: ${f.work}\nความรัก: ${f.love}\nการเงิน: ${f.money}\nสุขภาพ: ${f.health}\nคำแนะนำ: ${f.tip}\n\nเสี่ยงเซียมซีและลอยกระทงที่ ${location.href.split("#")[0].split("?")[0]}`;
+    const text = `เซียมซีใบที่ ${th(f.n)} (${f.level})\n"${f.verse}"\nการงาน การเรียน: ${f.work}\nความรัก: ${f.love}\nการเงิน: ${f.money}\nสุขภาพ: ${f.health}\nคำแนะนำ: ${f.tip}\n\nเสี่ยงเซียมซีและลอยกระทงที่ ${siteUrl()}`;
     try { await navigator.clipboard.writeText(text); toast("คัดลอกคำทำนายแล้ว"); }
     catch (e) { toast("คัดลอกไม่ได้ ลองกดค้างที่ข้อความแทน"); }
+  });
+  $("fStory").addEventListener("click", async () => {
+    if (!current) return;
+    const btn = $("fStory"); btn.disabled = true; btn.textContent = "กำลังสร้างรูป…";
+    try {
+      const blob = await S.storyImage(current, $("fortune").dataset.topic, { paper, url: siteUrl().replace(/^https?:\/\//, ""), eventName: (settings && settings.event_name) || "ลอยกระทงออนไลน์" });
+      const file = new File([blob], `siamsi-${current.n}.png`, { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "เซียมซี" }); } catch (e) { if (e.name !== "AbortError") throw e; }
+      } else {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name;
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        toast("บันทึกรูปแล้ว เอาไปลงสตอรี่ได้เลย");
+      }
+    } catch (e) { toast("สร้างรูปไม่สำเร็จ ลองอีกครั้ง"); }
+    btn.disabled = false; btn.textContent = "บันทึกรูปไปแชร์";
   });
   $("fFloat").addEventListener("click", () => {
     closeSheets();

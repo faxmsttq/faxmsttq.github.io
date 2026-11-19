@@ -4,7 +4,7 @@
   const cfg = window.LK_CONFIG || {};
   const configured = !!(cfg.SUPABASE_URL && cfg.SUPABASE_KEY && /^https:\/\//.test(cfg.SUPABASE_URL));
   const SB_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0";
-  const COLS = "id,name,base,flower,sathu_count,created_at"; // ไม่ดึงคำอธิษฐาน (เป็นความลับ)
+  const COLS = "id,name,base,flower,sathu_count,created_at,is_public,public_wish,lucky"; // ไม่ดึงคำอธิษฐาน (เป็นความลับ)
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -76,7 +76,7 @@
     if (!list) {
       const now = Date.now();
       list = SAMPLE.map(([name, wish, base, flower], i) => ({
-        id: uuid(), name, wish, base, flower, sathu_count: (i * 7) % 13,
+        id: uuid(), name, wish, base, flower, sathu_count: (i * 7) % 13, is_public: i % 3 === 0, public_wish: i % 3 === 0 ? wish : null, lucky: i === 4,
         created_at: new Date(now - (i * 23 + 4) * 60000).toISOString(), sample: true,
       }));
       store.set("lk-demo", list);
@@ -107,6 +107,7 @@
     async list(limit = 160) {
       const c = await client();
       if (!c) return demoAll().filter((r) => (r.status || "visible") === "visible")
+        .map(({ wish, ...r }) => r)
         .sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
       const { data, error } = await c.from("krathongs").select(COLS).eq("status", "visible")
         .order("created_at", { ascending: false }).limit(limit);
@@ -122,8 +123,8 @@
       return count;
     },
 
-    async float({ name, wish, base, flower }) {
-      const rec = { id: uuid(), name: (name || "").trim().slice(0, 30), wish: (wish || "").trim().slice(0, 140), base, flower };
+    async float({ name, wish, base, flower, is_public, lucky }) {
+      const rec = { id: uuid(), name: (name || "").trim().slice(0, 30), wish: (wish || "").trim().slice(0, 140), base, flower, is_public: !!is_public, lucky: !!lucky };
       const c = await client();
       if (!c) {
         const list = demoAll();
@@ -132,7 +133,7 @@
         const words = store.get("lk-demo-words", []);
         const text = (rec.name + " " + rec.wish).toLowerCase();
         const flagged = words.some((w) => text.includes(String(w).toLowerCase()));
-        const full = { ...rec, sathu_count: 0, created_at: new Date().toISOString(),
+        const full = { ...rec, public_wish: rec.is_public ? rec.wish : null, sathu_count: 0, created_at: new Date().toISOString(),
           status: flagged || ds.require_approval ? "pending" : "visible", flagged };
         list.unshift(full);
         store.set("lk-demo", list.slice(0, 300));
@@ -141,7 +142,7 @@
       }
       const { error } = await c.from("krathongs").insert(rec);
       if (error) throw mapError(error);
-      const full = { ...rec, sathu_count: 0, created_at: new Date().toISOString() };
+      const full = { ...rec, public_wish: rec.is_public ? rec.wish : null, sathu_count: 0, created_at: new Date().toISOString() };
       api.saveMine(full);
       return full;
     },
@@ -169,7 +170,7 @@
     /* กระทงของฉัน: เก็บคำอธิษฐานไว้ในเครื่องเจ้าของเท่านั้น */
     saveMine(rec) {
       const L = store.get("lk-mine-recs", []).filter((r) => r.id !== rec.id);
-      L.unshift({ id: rec.id, name: rec.name, wish: rec.wish, base: rec.base, flower: rec.flower, created_at: rec.created_at });
+      L.unshift({ id: rec.id, name: rec.name, wish: rec.wish, base: rec.base, flower: rec.flower, is_public: !!rec.is_public, lucky: !!rec.lucky, created_at: rec.created_at });
       store.set("lk-mine-recs", L.slice(0, 100));
     },
     mine() { return store.get("lk-mine-recs", []); },

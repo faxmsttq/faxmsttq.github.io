@@ -511,6 +511,11 @@
           ctx.globalAlpha = (1 - i / 11) * 0.6 * alpha;
           ctx.drawImage(A.softGlow, xx - ww * 0.75, yy - hh, ww * 1.5, hh * 2);
         }
+        if (e.rec.lucky) {
+          const cyL = yW - wpx * 0.22 + dy;
+          ctx.globalAlpha = 0.45 * alpha * (0.8 + 0.2 * Math.sin(t * 2 + e.seed));
+          ctx.drawImage(A.glow, x - wpx * 0.9, cyL - wpx * 0.6, wpx * 1.8, wpx * 1.1);
+        }
         ctx.globalCompositeOperation = "source-over";
         ctx.globalAlpha = alpha * 0.9;
         ctx.drawImage(sp.refl, left, top, sp.w * k, sp.h * k);
@@ -523,6 +528,7 @@
         if (s > 0.42) A.smoke(ctx, sp.tips, -(sp.w / 2) * k, -sp.water * k, k, t, e.seed);
         A.flame(ctx, (sp.flame.x - sp.w / 2) * k, (sp.flame.y - sp.water) * k, k * 1.25, t, e.seed);
         ctx.restore();
+        if (e.rec.lucky) this.sparkles(ctx, x, yW - wpx * 0.25 + dy, wpx, t, e.seed, alpha);
         labels.push([e, x, top + sp.flame.y * k + dy - 30 * k, s, alpha]);
         // เส้นน้ำแตะขอบกระทง
         ctx.globalAlpha = 0.18 * alpha;
@@ -537,6 +543,25 @@
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
       for (const L of labels) this.drawLabel(ctx, ...L);
+    }
+
+    sparkles(ctx, x, y, wpx, t, seed, alpha) {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < 5; i++) {
+        const a = t * 0.7 + seed + (i / 5) * Math.PI * 2;
+        const px = x + Math.cos(a) * wpx * 0.5, py = y + Math.sin(a) * wpx * 0.14 - Math.abs(Math.sin(t * 1.3 + i)) * wpx * 0.12;
+        const tw = 0.5 + 0.5 * Math.sin(t * 5 + i * 2 + seed), r = Math.max(2, wpx * 0.035) * (0.6 + tw * 0.6);
+        ctx.globalAlpha = alpha * (0.4 + 0.6 * tw);
+        ctx.fillStyle = "#ffe39a";
+        ctx.beginPath();
+        ctx.moveTo(px, py - r * 2); ctx.lineTo(px + r * 0.4, py - r * 0.4); ctx.lineTo(px + r * 2, py); ctx.lineTo(px + r * 0.4, py + r * 0.4);
+        ctx.lineTo(px, py + r * 2); ctx.lineTo(px - r * 0.4, py + r * 0.4); ctx.lineTo(px - r * 2, py); ctx.lineTo(px - r * 0.4, py - r * 0.4);
+        ctx.closePath(); ctx.fill();
+        ctx.globalAlpha = alpha * 0.35 * tw;
+        ctx.drawImage(window.LKArt.softGlow, px - r * 4, py - r * 4, r * 8, r * 8);
+      }
+      ctx.restore();
     }
 
     drawLabel(ctx, e, x, y, s, alpha) {
@@ -556,7 +581,7 @@
       ctx.globalAlpha = a;
       ctx.fillStyle = mine ? "rgba(246,194,107,.92)" : "rgba(6,11,24,.62)";
       ctx.beginPath(); ctx.roundRect(lx, ly, L.w + padX * 2, h, h / 2); ctx.fill();
-      if (!mine) { ctx.strokeStyle = "rgba(243,233,210,.16)"; ctx.lineWidth = 1; ctx.stroke(); }
+      if (!mine) { ctx.strokeStyle = e.rec.lucky ? "rgba(246,194,107,.85)" : "rgba(243,233,210,.16)"; ctx.lineWidth = e.rec.lucky ? 1.5 : 1; ctx.stroke(); }
       ctx.font = `500 ${L.fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
       ctx.fillStyle = mine ? "#1b1f33" : "#f3e9d2";
       ctx.textBaseline = "middle"; ctx.textAlign = "left";

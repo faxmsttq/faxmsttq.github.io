@@ -319,17 +319,17 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795108669"></script>
-<script src="js/art.js?v=1795108669"></script>
-<script src="js/siamsi.js?v=1795108669"></script>
-<script src="js/api.js?v=1795108669"></script>
+<script src="config.js?v=1795109582"></script>
+<script src="js/art.js?v=1795109582"></script>
+<script src="js/siamsi.js?v=1795109582"></script>
+<script src="js/api.js?v=1795109582"></script>
 <script>
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
   const api = window.LKApi, Art = window.LKArt;
   const th = (n) => Number(n || 0).toLocaleString("th-TH-u-nu-thai");
-  const COLS = "id,name,wish,base,flower,status,flagged,sathu_count,created_at";
+  const COLS = "id,name,wish,base,flower,status,flagged,sathu_count,created_at,is_public,lucky";
   const PAGE = 50;
   let toastT;
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3200); }
@@ -536,6 +536,9 @@
       tr.querySelector(".who").textContent = r.name || "ไม่ระบุชื่อ";
       if (r.sathu_count) { const sn = document.createElement("span"); sn.className = "sn"; sn.textContent = "สาธุ " + th(r.sathu_count); tr.querySelector(".who").appendChild(sn); }
       tr.querySelector(".what").textContent = r.wish;
+      const vt = document.createElement("span"); vt.className = "sn"; vt.style.color = r.is_public ? "var(--leaf)" : "var(--faint)";
+      vt.textContent = r.is_public ? "เปิดให้อ่าน" : "ความลับ"; tr.querySelector(".who").appendChild(vt);
+      if (r.lucky) { const lk = document.createElement("span"); lk.className = "sn"; lk.textContent = "ประกายทอง"; tr.querySelector(".who").appendChild(lk); }
       tr.querySelector(".when").textContent = fmtTime(r.created_at);
       const cb = tr.querySelector("input");
       cb.checked = state.selected.has(r.id);
