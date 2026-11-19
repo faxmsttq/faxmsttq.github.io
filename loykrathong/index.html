@@ -30,8 +30,8 @@
   body.ready #river{opacity:1}
 
   /* ---------- หัวเรื่อง ---------- */
-  .masthead{position:fixed;top:calc(16px + var(--safe-t));left:clamp(20px,4.5vw,64px);z-index:5;max-width:min(560px,80vw);pointer-events:none}
-  .title{font-family:"Charm",serif;font-weight:700;font-size:clamp(48px,7.4vw,112px);line-height:1.3;padding-top:.35em;letter-spacing:0;
+  .masthead{position:fixed;top:calc(16px + var(--safe-t));left:clamp(20px,4.5vw,64px);right:clamp(20px,4.5vw,64px);z-index:5;pointer-events:none}
+  .title{white-space:nowrap;display:inline-block;font-family:"Charm",serif;font-weight:700;font-size:clamp(48px,7.4vw,112px);line-height:1.3;padding-top:.35em;letter-spacing:0;
     color:var(--moon);text-shadow:0 0 34px rgba(246,194,107,.22),0 2px 0 rgba(0,0,0,.25);
     opacity:0;filter:blur(8px);transform:translateY(6px);transition:opacity 1.4s ease .3s,filter 1.4s ease .3s,transform 1.4s ease .3s}
   .tagline{margin-top:10px;max-width:34ch;text-wrap:balance;font-size:clamp(15px,1.5vw,17.5px);color:var(--moon-dim);
@@ -264,10 +264,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795107173"></script>
-<script src="js/art.js?v=1795107173"></script>
-<script src="js/api.js?v=1795107173"></script>
-<script src="js/river.js?v=1795107173"></script>
+<script src="config.js?v=1795108422"></script>
+<script src="js/art.js?v=1795108422"></script>
+<script src="js/api.js?v=1795108422"></script>
+<script src="js/river.js?v=1795108422"></script>
 <script>
 (() => {
   "use strict";
@@ -330,13 +330,22 @@
   }
 
   /* ---------- ป้ายชื่อเวลาเอาเมาส์ชี้ ---------- */
-  river.onHover = (rec, pos) => {
-    const tag = $("tag");
-    if (!rec || !$("slip").hidden) { tag.hidden = true; return; }
-    tag.textContent = displayName(rec);
-    tag.style.left = pos.x + "px"; tag.style.top = pos.y + "px";
-    tag.hidden = false;
-  };
+  river.onHover = null;
+  river.mine = mine;
+
+  /* ---------- ชื่องานพอดีบรรทัดเดียว ---------- */
+  function fitTitle() {
+    const t = $("title");
+    t.style.fontSize = "";
+    const max = parseFloat(getComputedStyle(t).fontSize);
+    const left = t.getBoundingClientRect().left;
+    const portrait = window.innerWidth / window.innerHeight < 0.8;
+    const avail = portrait ? window.innerWidth - left * 2 : Math.min(window.innerWidth * 0.62 - left, 900);
+    const need = t.scrollWidth;
+    if (need > avail) t.style.fontSize = Math.max(28, Math.floor(max * (avail / need))) + "px";
+  }
+  window.addEventListener("resize", fitTitle);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
 
   /* ---------- การ์ดคำอธิษฐาน ---------- */
   let slipRec = null;
@@ -605,6 +614,7 @@
   function applySettings(s) {
     settings = s;
     $("title").textContent = s.event_name || "ลอยกระทง";
+    fitTitle();
     document.title = s.event_name || "ลอยกระทง";
     if (s.tagline) {
       const tg = $("tagline"); tg.textContent = "";

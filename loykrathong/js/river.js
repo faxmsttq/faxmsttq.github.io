@@ -474,6 +474,7 @@
 
     drawKrathongs(ctx, t, now) {
       const T = Date.now() / 1000;
+      const labels = [];
       for (const e of this.order) {
         const sp = A.sprite(e.rec.base, e.rec.flower);
         const { s, wpx, m, span, v } = this.motion(e);
@@ -522,6 +523,7 @@
         if (s > 0.42) A.smoke(ctx, sp.tips, -(sp.w / 2) * k, -sp.water * k, k, t, e.seed);
         A.flame(ctx, (sp.flame.x - sp.w / 2) * k, (sp.flame.y - sp.water) * k, k * 1.25, t, e.seed);
         ctx.restore();
+        labels.push([e, x, top + sp.flame.y * k + dy - 30 * k, s, alpha]);
         // เส้นน้ำแตะขอบกระทง
         ctx.globalAlpha = 0.18 * alpha;
         ctx.strokeStyle = "#c8d6ff"; ctx.lineWidth = Math.max(0.6, s);
@@ -534,6 +536,32 @@
         }
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+      for (const L of labels) this.drawLabel(ctx, ...L);
+    }
+
+    drawLabel(ctx, e, x, y, s, alpha) {
+      const name = (e.rec.name || "").trim();
+      if (!name || s < 0.3) return;
+      const fs = Math.round(Math.max(11, Math.min(15, 6 + 10 * s)));
+      if (!e.label || e.label.fs !== fs || e.label.src !== name) {
+        const text = name.length > 16 ? name.slice(0, 15) + "…" : name;
+        ctx.font = `500 ${fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
+        e.label = { fs, src: name, text, w: ctx.measureText(text).width };
+      }
+      const L = e.label, padX = 8, h = fs + 9;
+      const lx = Math.max(6, Math.min(this.W - L.w - padX * 2 - 6, x - L.w / 2 - padX));
+      const ly = Math.max(6, y - h);
+      const mine = this.mine && this.mine.has(e.id);
+      const a = alpha * (0.55 + 0.45 * Math.min(1, (s - 0.3) / 0.5));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = mine ? "rgba(246,194,107,.92)" : "rgba(6,11,24,.62)";
+      ctx.beginPath(); ctx.roundRect(lx, ly, L.w + padX * 2, h, h / 2); ctx.fill();
+      if (!mine) { ctx.strokeStyle = "rgba(243,233,210,.16)"; ctx.lineWidth = 1; ctx.stroke(); }
+      ctx.font = `500 ${L.fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
+      ctx.fillStyle = mine ? "#1b1f33" : "#f3e9d2";
+      ctx.textBaseline = "middle"; ctx.textAlign = "left";
+      ctx.fillText(L.text, lx + padX, ly + h / 2 + 1);
+      ctx.globalAlpha = 1;
     }
 
     drawRipples(ctx, now) {
