@@ -64,7 +64,7 @@
   h3{font-size:15.5px;font-weight:600;margin-bottom:14px}
 
   /* ---------- ภาพรวม ---------- */
-  .figures{margin-bottom:38px;display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .figures{margin-bottom:38px;display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .fig{padding:18px 16px 16px;border-left:1px solid var(--line)}
   .fig:first-child{border-left:0;padding-left:0}
   .fig b{display:block;font-size:30px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
@@ -131,7 +131,7 @@
 
   @media (max-width:860px){
     .figures{grid-template-columns:repeat(3,1fr)}
-    .fig:nth-child(4){border-left:0;padding-left:0}
+    .fig:nth-child(3n+1){border-left:0;padding-left:0}
     .fig:nth-child(n+4){border-top:1px solid var(--line)}
     .split,.row2{grid-template-columns:1fr}
     .top .event{display:none}
@@ -227,10 +227,16 @@
         <div class="fig warn"><a href="#moderate" data-filter="pending"><b id="fPending">–</b><span>รอตรวจ</span></a></div>
         <div class="fig"><b id="fHidden">–</b><span>ซ่อนแล้ว</span></div>
         <div class="fig"><b id="fSathu">–</b><span>ยอดสาธุ</span></div>
+        <div class="fig"><b id="fSiamsi">–</b><span>เสี่ยงเซียมซี</span></div>
       </div>
       <section>
         <h3>กระทงที่ลอยใน ๒๔ ชั่วโมงล่าสุด</h3>
         <svg class="chart" id="chart" role="img" aria-label="กราฟจำนวนกระทงรายชั่วโมง"></svg>
+      </section>
+      <section>
+        <h3>เซียมซีที่ออกบ่อย</h3>
+        <p class="lead" id="siamsiLead" style="margin-bottom:12px"></p>
+        <div id="siamsiTop"></div>
       </section>
       <section class="split">
         <div><h3>ฐานกระทงที่เลือก</h3><div id="byBase"></div></div>
@@ -313,9 +319,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795106974"></script>
-<script src="js/art.js?v=1795106974"></script>
-<script src="js/api.js?v=1795106974"></script>
+<script src="config.js?v=1795108669"></script>
+<script src="js/art.js?v=1795108669"></script>
+<script src="js/siamsi.js?v=1795108669"></script>
+<script src="js/api.js?v=1795108669"></script>
 <script>
 (() => {
   "use strict";
@@ -388,6 +395,14 @@
           hidden: L.filter((r) => r.status === "hidden").length, flagged: L.filter((r) => r.flagged).length,
           today: L.filter((r) => new Date(r.created_at) >= day).length, sathu: L.reduce((s, r) => s + (r.sathu_count || 0), 0),
           by_base: by("base"), by_flower: by("flower"), by_hour: Object.entries(hours).map(([h, c]) => ({ h, c })),
+          ...(() => {
+            const D = S.get("lk-demo-siamsi", []), cnt = {};
+            D.forEach((d) => (cnt[d.n] = (cnt[d.n] || 0) + 1));
+            return {
+              siamsi_total: D.length, siamsi_today: D.filter((d) => d.t >= day.getTime()).length,
+              siamsi_top: Object.entries(cnt).map(([n, c]) => ({ n: +n, c })).sort((a, b) => b.c - a.c || a.n - b.n).slice(0, 5),
+            };
+          })(),
         };
       },
       async list({ filter, q, offset }) {
@@ -432,6 +447,20 @@
       $("fTotal").textContent = th(s.total); $("fToday").textContent = th(s.today); $("fVisible").textContent = th(s.visible);
       $("fPending").textContent = th(s.pending); $("fHidden").textContent = th(s.hidden); $("fSathu").textContent = th(s.sathu);
       $("pendingBadge").hidden = !s.pending; $("pendingBadge").textContent = th(s.pending);
+      $("fSiamsi").textContent = th(s.siamsi_total || 0);
+      $("siamsiLead").textContent = `วันนี้ ${th(s.siamsi_today || 0)} ครั้ง จากทั้งหมด ${th(s.siamsi_total || 0)} ครั้ง`;
+      const top = s.siamsi_top || [], el = $("siamsiTop"); el.innerHTML = "";
+      if (!top.length) el.innerHTML = '<p style="color:var(--faint);font-size:14px">ยังไม่มีใครเสี่ยงเซียมซี</p>';
+      const maxC = Math.max(1, ...top.map((x) => x.c));
+      top.forEach((x) => {
+        const f = (window.LKSiamsi && window.LKSiamsi.FORTUNES[x.n - 1]) || { level: "" };
+        const row = document.createElement("div"); row.className = "hbar"; row.style.gridTemplateColumns = "150px 1fr 48px";
+        row.innerHTML = '<span></span><div class="track"><div class="fill"></div></div><span class="n"></span>';
+        row.children[0].textContent = `ใบที่ ${th(x.n)} (${f.level})`;
+        row.querySelector(".fill").style.width = (100 * x.c / maxC) + "%";
+        row.querySelector(".n").textContent = th(x.c);
+        el.appendChild(row);
+      });
       drawChart(s.by_hour || []);
       drawBars("byBase", s.by_base || {}, Art.BASES, (id, cv) => Art.thumb(cv, id, "marigold", { t: 1 }));
       drawBars("byFlower", s.by_flower || {}, Art.FLOWERS, (id, cv) => Art.thumb(cv, "banana", id, { flowerOnly: true }));

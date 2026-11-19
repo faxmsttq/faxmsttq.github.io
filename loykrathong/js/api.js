@@ -4,7 +4,7 @@
   const cfg = window.LK_CONFIG || {};
   const configured = !!(cfg.SUPABASE_URL && cfg.SUPABASE_KEY && /^https:\/\//.test(cfg.SUPABASE_URL));
   const SB_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0";
-  const COLS = "id,name,wish,base,flower,sathu_count,created_at";
+  const COLS = "id,name,base,flower,sathu_count,created_at"; // ไม่ดึงคำอธิษฐาน (เป็นความลับ)
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -136,11 +136,14 @@
           status: flagged || ds.require_approval ? "pending" : "visible", flagged };
         list.unshift(full);
         store.set("lk-demo", list.slice(0, 300));
+        api.saveMine(full);
         return full;
       }
       const { error } = await c.from("krathongs").insert(rec);
       if (error) throw mapError(error);
-      return { ...rec, sathu_count: 0, created_at: new Date().toISOString() };
+      const full = { ...rec, sathu_count: 0, created_at: new Date().toISOString() };
+      api.saveMine(full);
+      return full;
     },
 
     async sathu(id) {
@@ -163,6 +166,22 @@
     },
 
     demoAll,
+    /* กระทงของฉัน: เก็บคำอธิษฐานไว้ในเครื่องเจ้าของเท่านั้น */
+    saveMine(rec) {
+      const L = store.get("lk-mine-recs", []).filter((r) => r.id !== rec.id);
+      L.unshift({ id: rec.id, name: rec.name, wish: rec.wish, base: rec.base, flower: rec.flower, created_at: rec.created_at });
+      store.set("lk-mine-recs", L.slice(0, 100));
+    },
+    mine() { return store.get("lk-mine-recs", []); },
+    myRec(id) { return store.get("lk-mine-recs", []).find((r) => r.id === id) || null; },
+
+    async logSiamsi(n) {
+      const c = await client();
+      if (!c) { const L = store.get("lk-demo-siamsi", []); L.push({ n, t: Date.now() }); store.set("lk-demo-siamsi", L.slice(-500)); return; }
+      const { error } = await c.from("siamsi_draws").insert({ number: n });
+      if (error) throw mapError(error);
+    },
+
     hasSathu(id) { return store.get("lk-sathu", []).includes(id); },
 
     /* handlers: { upsert(rec), remove(id), status(state) } */

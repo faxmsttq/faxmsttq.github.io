@@ -75,6 +75,7 @@
   @keyframes slipIn{from{opacity:0;transform:translateY(14px) rotate(-2deg) scale(.96)}}
   .slip-name{font-family:"Charm",serif;font-weight:700;font-size:30px;line-height:1.15;color:#5a2e12;padding-right:28px;word-break:break-word}
   .slip-wish{margin-top:10px;font-size:17px;line-height:1.75;word-break:break-word}
+  .slip-wish.secret{font-size:15px;color:rgba(34,37,58,.62);font-style:italic}
   .slip-meta{margin-top:12px;font-size:13px;white-space:pre-line;color:rgba(34,37,58,.62)}
   .slip-actions{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
   .sathu{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(34,37,58,.35);font-size:14.5px;font-weight:600;transition:.2s}
@@ -140,6 +141,27 @@
   .w-sathu{font-size:12.5px;color:var(--candle);margin-top:4px}
   .empty{padding:40px 8px;text-align:center;color:var(--moon-dim)}
 
+
+  /* ---------- เซียมซี ---------- */
+  .siamsi-stage{display:block;width:100%;height:330px;border-radius:14px;margin:8px 0 4px;background:#0d1530}
+  .siamsi-hint{font-size:14px;color:var(--moon-dim);text-align:center;margin-top:6px}
+  .fortune{position:relative;margin-top:18px;padding:22px 22px 18px;color:var(--ink);background-color:#efe4cb;background-size:220px;
+    border-radius:3px 3px 6px 6px;box-shadow:0 24px 50px -18px rgba(0,0,0,.7);transform:rotate(.4deg)}
+  .fortune.show{animation:slipIn .45s cubic-bezier(.2,.9,.3,1.2)}
+  .fortune-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .fortune-no{font-family:"Charm",serif;font-weight:700;font-size:34px;line-height:1.2;color:#5a2e12}
+  .fortune-lv{font-size:13.5px;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid rgba(34,37,58,.4);white-space:nowrap}
+  .fortune-lv.lv4{background:#5a2e12;color:#efe4cb;border-color:#5a2e12}
+  .fortune-lv.lv1{color:#8a2b1d;border-color:#8a2b1d}
+  .fortune-verse{font-family:"Charm",serif;font-weight:700;font-size:23px;line-height:1.55;color:#3b2414;margin:8px 0 14px}
+  .fortune dl{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:15px;line-height:1.6}
+  .fortune dt{font-weight:600;color:rgba(34,37,58,.66);white-space:nowrap}
+  .fortune dd{margin:0}
+  .fortune-tip{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(34,37,58,.28);font-size:15px;line-height:1.6}
+  .fortune-tip b{color:#5a2e12}
+  .fortune-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+  .paper-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(34,37,58,.35);font-size:14.5px;font-weight:600;color:var(--ink);transition:background .2s}
+  .paper-btn:hover{background:rgba(34,37,58,.07)}
   .toast{position:fixed;left:50%;bottom:calc(112px + var(--safe-b));z-index:40;transform:translate(-50%,10px);max-width:calc(100vw - 32px);
     padding:12px 18px;border-radius:12px;background:rgba(11,19,34,.96);border:1px solid rgba(246,194,107,.3);font-size:15px;text-align:center;
     opacity:0;pointer-events:none;transition:opacity .35s,transform .35s}
@@ -188,9 +210,13 @@
     <span id="makeLbl">ประดิษฐ์กระทง</span>
   </button>
   <div class="aux">
-    <button class="btn-text" id="wishesBtn" type="button" aria-label="อ่านคำอธิษฐาน">
+    <button class="btn-text" id="siamsiBtn" type="button" aria-label="เสี่ยงเซียมซี">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 8.5h8l-1 9H7z"/><path d="M8.5 8.5 7.5 2.5M10.2 8.5V1.8M12 8.5l1.2-5.6"/></svg>
+      <span class="lbl">เซียมซี</span>
+    </button>
+    <button class="btn-text" id="wishesBtn" type="button" aria-label="กระทงของฉัน">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 3.5h9.5L16 6v10.5H4z"/><path d="M7 8h6M7 11h6M7 14h3.5"/></svg>
-      <span class="lbl">คำอธิษฐาน</span>
+      <span class="lbl">กระทงของฉัน</span>
     </button>
     <button class="btn-text" id="shareBtn" type="button" aria-label="ชวนเพื่อนมาลอย">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8.5 11.5l3-3M7 9.5l-1.6 1.6a2.8 2.8 0 0 0 4 4L11 13.5M13 10.5l1.6-1.6a2.8 2.8 0 0 0-4-4L9 6.5"/></svg>
@@ -250,24 +276,55 @@
       <svg viewBox="0 0 14 18" aria-hidden="true"><path d="M7 0C4 4.5 2 7.2 2 10.6A5 5 0 0 0 12 10.6C12 7.2 10 4.5 7 0Z" fill="#b5541b"/><path d="M7 6c-1.4 2-2.3 3.4-2.3 5a2.3 2.3 0 0 0 4.6 0C9.3 9.4 8.4 8 7 6Z" fill="#fff3cf"/></svg>
       <span id="floatLbl">ลอยกระทง</span>
     </button>
-    <p class="foot-note">ชื่อและคำอธิษฐานจะแสดงให้ทุกคนที่เข้าเว็บเห็น</p>
+    <p class="foot-note">ชื่อจะลอยบนกระทงให้ทุกคนเห็น ส่วนคำอธิษฐานเป็นความลับ เห็นเฉพาะคุณและผู้ดูแลที่คัดกรองข้อความ</p>
   </div>
 </aside>
 
 <aside class="sheet" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
   <div class="sheet-head">
-    <div><h2 id="drawerTitle">คำอธิษฐานริมน้ำ</h2><p id="drawerSub">กระทงล่าสุดที่ลอยอยู่ตอนนี้</p></div>
+    <div><h2 id="drawerTitle">กระทงของฉัน</h2><p id="drawerSub">คำอธิษฐานของคุณเห็นได้เฉพาะในเครื่องนี้</p></div>
     <button class="x" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
   </div>
   <div class="sheet-body"><ul class="wishes" id="wishes"></ul></div>
 </aside>
 
+<aside class="sheet" id="siamsi" role="dialog" aria-modal="true" aria-labelledby="siamsiTitle">
+  <div class="sheet-head">
+    <div><h2 id="siamsiTitle">เสี่ยงเซียมซี</h2><p>ตั้งจิตนึกถึงเรื่องที่อยากรู้ แล้วเขย่ากระบอก</p></div>
+    <button class="x" type="button" data-close aria-label="ปิด"><svg viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+  </div>
+  <div class="sheet-body" id="siamsiBody">
+    <canvas class="siamsi-stage" id="siamsiCanvas" aria-hidden="true"></canvas>
+    <p class="siamsi-hint" id="siamsiHint">กดปุ่มด้านล่าง หรือเขย่ามือถือ</p>
+    <article class="fortune" id="fortune" hidden aria-live="polite">
+      <div class="fortune-head"><h3 class="fortune-no" id="fNo"></h3><span class="fortune-lv" id="fLv"></span></div>
+      <p class="fortune-verse" id="fVerse"></p>
+      <dl>
+        <dt>การงาน การเรียน</dt><dd id="fWork"></dd>
+        <dt>ความรัก</dt><dd id="fLove"></dd>
+        <dt>การเงิน</dt><dd id="fMoney"></dd>
+        <dt>สุขภาพ</dt><dd id="fHealth"></dd>
+      </dl>
+      <p class="fortune-tip"><b>คำแนะนำ</b> <span id="fTip"></span></p>
+      <div class="fortune-actions">
+        <button class="paper-btn" id="fCopy" type="button">คัดลอกคำทำนาย</button>
+        <button class="paper-btn" id="fFloat" type="button">ลอยกระทงขอพรต่อ</button>
+      </div>
+    </article>
+  </div>
+  <div class="sheet-foot">
+    <button class="btn-primary" id="shakeBtn" type="button"><span id="shakeLbl">เขย่าเซียมซี</span></button>
+    <p class="foot-note">คำทำนายมีไว้เพื่อความสนุกและเป็นกำลังใจ</p>
+  </div>
+</aside>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795108422"></script>
-<script src="js/art.js?v=1795108422"></script>
-<script src="js/api.js?v=1795108422"></script>
-<script src="js/river.js?v=1795108422"></script>
+<script src="config.js?v=1795108669"></script>
+<script src="js/art.js?v=1795108669"></script>
+<script src="js/api.js?v=1795108669"></script>
+<script src="js/river.js?v=1795108669"></script>
+<script src="js/siamsi.js?v=1795108669"></script>
 <script>
 (() => {
   "use strict";
@@ -307,24 +364,26 @@
   function renderList() {
     const ul = $("wishes");
     ul.innerHTML = "";
-    const list = sorted();
+    const list = api.mine();
     if (!list.length) {
       const li = document.createElement("li"); li.className = "empty";
-      li.textContent = "แม่น้ำยังว่างอยู่ ลอยกระทงใบแรกของคืนนี้ได้เลย";
+      li.textContent = "คุณยังไม่ได้ลอยกระทงจากเครื่องนี้ ประดิษฐ์ใบแรกได้เลย";
       ul.appendChild(li); return;
     }
-    list.slice(0, 150).forEach((r) => {
+    list.forEach((r) => {
+      const live = all.get(r.id);
+      const rec = { ...r, sathu_count: live ? live.sathu_count : (r.sathu_count || 0) };
       const li = document.createElement("li");
       const b = document.createElement("button"); b.type = "button";
       b.innerHTML = '<div class="w-top"><span class="w-name"></span><span class="w-time"></span></div><p class="w-wish"></p>';
-      b.querySelector(".w-name").textContent = displayName(r) + (mine.has(r.id) ? " (ของคุณ)" : "");
-      b.querySelector(".w-time").textContent = timeAgo(r.created_at);
-      b.querySelector(".w-wish").textContent = r.wish;
-      if (r.sathu_count > 0) {
-        const p = document.createElement("p"); p.className = "w-sathu"; p.textContent = "สาธุ " + th(r.sathu_count);
+      b.querySelector(".w-name").textContent = displayName(rec);
+      b.querySelector(".w-time").textContent = timeAgo(rec.created_at);
+      b.querySelector(".w-wish").textContent = rec.wish;
+      if (rec.sathu_count > 0) {
+        const p = document.createElement("p"); p.className = "w-sathu"; p.textContent = "มีคนร่วมสาธุ " + th(rec.sathu_count) + " คน";
         b.appendChild(p);
       }
-      b.addEventListener("click", () => { closeSheets(); river.focus(r.id); openSlip(r, null); });
+      b.addEventListener("click", () => { closeSheets(); river.focus(rec.id); openSlip(rec, null); });
       li.appendChild(b); ul.appendChild(li);
     });
   }
@@ -355,7 +414,9 @@
     slipRec = rec;
     $("tag").hidden = true;
     $("slipName").textContent = displayName(rec);
-    $("slipWish").textContent = rec.wish;
+    const own = api.myRec(rec.id);
+    $("slipWish").classList.toggle("secret", !own);
+    $("slipWish").textContent = own ? own.wish : "คำอธิษฐานของกระทงใบนี้เป็นความลับระหว่างเจ้าของกับสายน้ำ ร่วมส่งพรให้ได้ด้วยการกดสาธุ";
     const b = Art.BASES[rec.base] || Art.BASES.banana, f = Art.FLOWERS[rec.flower] || Art.FLOWERS.marigold;
     const ago = timeAgo(rec.created_at);
     $("slipMeta").textContent = "กระทง" + b.name + " ประดับ" + f.name + "\n" + (ago === "เมื่อสักครู่" ? "ลอยเมื่อสักครู่" : "ลอยเมื่อ " + ago);
@@ -458,6 +519,9 @@
       $("makeErr").hidden = true;
       requestAnimationFrame(() => { syncMaker(); cancelAnimationFrame(previewRAF); previewRAF = requestAnimationFrame(previewLoop); });
       setTimeout(() => $("wish").focus({ preventScroll: true }), 420);
+    } else if (id === "siamsi") {
+      openSiamsi();
+      setTimeout(() => $("shakeBtn").focus({ preventScroll: true }), 420);
     } else {
       renderList();
       setTimeout(() => $(id).querySelector(".x").focus({ preventScroll: true }), 300);
@@ -467,6 +531,8 @@
     document.querySelectorAll(".sheet.open").forEach((s) => s.classList.remove("open"));
     $("scrim").classList.remove("show");
     cancelAnimationFrame(previewRAF);
+    if (canister) canister.stop();
+    window.removeEventListener("devicemotion", onMotion);
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
   buildMaker();
@@ -518,6 +584,89 @@
     } finally {
       floating = false; $("floatBtn").disabled = false; $("floatLbl").textContent = "ลอยกระทง";
     }
+  });
+
+  /* ---------- เซียมซี ---------- */
+  const S = window.LKSiamsi;
+  let canister = null, drawing = false, current = null;
+  if (paper) $("fortune").style.backgroundImage = `url(${paper})`;
+  function openSiamsi() {
+    if (!canister) canister = new S.Canister($("siamsiCanvas"));
+    if (!drawing) { canister.reset(); }
+    canister.start();
+    const canMotion = "DeviceMotionEvent" in window && typeof DeviceMotionEvent.requestPermission !== "function" && matchMedia("(pointer:coarse)").matches;
+    $("siamsiHint").textContent = canMotion ? "กดปุ่มด้านล่าง หรือเขย่ามือถือ" : "ตั้งจิตอธิษฐาน แล้วกดปุ่มด้านล่าง";
+    if (canMotion) window.addEventListener("devicemotion", onMotion);
+  }
+  let lastShakeAt = 0;
+  function onMotion(e) {
+    const a = e.accelerationIncludingGravity || e.acceleration;
+    if (!a) return;
+    const m = Math.sqrt((a.x || 0) ** 2 + (a.y || 0) ** 2 + (a.z || 0) ** 2);
+    if (m > 24 && Date.now() - lastShakeAt > 1500) { lastShakeAt = Date.now(); drawFortune(); }
+  }
+  function clacks() {
+    try {
+      if (!ac) setupAudio();
+      ac.resume();
+      if (!soundOn) master.out.gain.setTargetAtTime(0.9, ac.currentTime, 0.01);
+      const t0 = ac.currentTime + 0.02;
+      for (let i = 0; i < 14; i++) {
+        const t = t0 + i * 0.12 + Math.random() * 0.05;
+        const len = Math.floor(ac.sampleRate * 0.035), b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0);
+        for (let j = 0; j < len; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / len, 4);
+        const src = ac.createBufferSource(); src.buffer = b;
+        const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1400 + Math.random() * 1400; f.Q.value = 6;
+        const g = ac.createGain(); g.gain.value = 0.5;
+        src.connect(f); f.connect(g); g.connect(master.bus); src.start(t);
+      }
+      if (!soundOn) master.out.gain.setTargetAtTime(0, t0 + 2.4, 0.3);
+    } catch (e) {}
+  }
+  function drawFortune() {
+    if (drawing) return;
+    drawing = true;
+    $("shakeBtn").disabled = true; $("shakeLbl").textContent = "กำลังเขย่า…";
+    $("fortune").hidden = true;
+    const n = S.randomNumber();
+    current = S.FORTUNES[n - 1];
+    clacks();
+    if (navigator.vibrate) { try { navigator.vibrate([40, 60, 40, 60, 40]); } catch (e) {} }
+    canister.reset();
+    canister.shake(n, () => { if (soundOn) chime(1); }, () => {
+      setTimeout(() => {
+        showFortune(current);
+        drawing = false;
+        $("shakeBtn").disabled = false; $("shakeLbl").textContent = "เสี่ยงใหม่";
+      }, 350);
+    });
+    api.logSiamsi(n).catch(() => {});
+  }
+  function showFortune(f) {
+    $("fNo").textContent = "ใบที่ " + th(f.n);
+    $("fLv").textContent = f.level; $("fLv").className = "fortune-lv lv" + f.lv;
+    $("fVerse").textContent = f.verse;
+    $("fWork").textContent = f.work; $("fLove").textContent = f.love;
+    $("fMoney").textContent = f.money; $("fHealth").textContent = f.health;
+    $("fTip").textContent = f.tip;
+    const el = $("fortune");
+    el.hidden = false; el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+    setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    api.store.set("lk-siamsi-last", { n: f.n, t: Date.now() });
+  }
+  $("siamsiBtn").addEventListener("click", () => openSheet("siamsi"));
+  $("shakeBtn").addEventListener("click", drawFortune);
+  $("fCopy").addEventListener("click", async () => {
+    if (!current) return;
+    const f = current;
+    const text = `เซียมซีใบที่ ${th(f.n)} (${f.level})\n"${f.verse}"\nการงาน การเรียน: ${f.work}\nความรัก: ${f.love}\nการเงิน: ${f.money}\nสุขภาพ: ${f.health}\nคำแนะนำ: ${f.tip}\n\nเสี่ยงเซียมซีและลอยกระทงที่ ${location.href.split("#")[0].split("?")[0]}`;
+    try { await navigator.clipboard.writeText(text); toast("คัดลอกคำทำนายแล้ว"); }
+    catch (e) { toast("คัดลอกไม่ได้ ลองกดค้างที่ข้อความแทน"); }
+  });
+  $("fFloat").addEventListener("click", () => {
+    closeSheets();
+    if (settings && !settings.is_open) return;
+    setTimeout(() => openSheet("maker"), 350);
   });
 
   /* ---------- ชวนเพื่อน ---------- */
@@ -647,7 +796,8 @@
     await refresh();
     if (api.configured) {
       api.subscribe({
-        upsert(r) {
+        upsert(raw) {
+          const { wish, flagged, ...r } = raw;
           const had = all.has(r.id);
           const merged = { ...(all.get(r.id) || {}), ...r };
           all.set(r.id, merged);
