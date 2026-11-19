@@ -13,7 +13,7 @@
   }
   function layer(w, h, dpr) {
     const c = document.createElement("canvas");
-    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    c.width = Math.max(1, Math.round(w * dpr)); c.height = Math.max(1, Math.round(h * dpr));
     const x = c.getContext("2d");
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     return [c, x];
@@ -150,6 +150,9 @@
 
     resize() {
       const W = window.innerWidth, H = window.innerHeight;
+      this.ready = false;
+      this.W = W; this.H = H;
+      if (W < 40 || H < 40) return;
       const dpr = Math.min(window.devicePixelRatio || 1, this.dprCap);
       this.W = W; this.H = H; this.dpr = dpr;
       this.c.width = Math.round(W * dpr); this.c.height = Math.round(H * dpr);
@@ -169,6 +172,7 @@
         const k = Math.pow(rnd(), 1.5);
         return { x: rnd() * W, k, y: this.horizon + 3 + (H - this.horizon) * k, w: 3 + k * 46, p: rnd() * 7, v: 2 + k * 7 };
       });
+      this.ready = true;
     }
 
     prerender() {
@@ -318,6 +322,7 @@
       this.resort();
     }
     add(rec) {
+      if (!this.ready) { this.items.set(rec.id, this.entity(rec, false)); this.resort(); return; }
       const e = this.entity(rec, true);
       const { span, m, v } = this.motion(e);
       const target = this.W * (this.portrait ? 0.5 : 0.42);
@@ -389,6 +394,8 @@
       this.last = now;
       if (dt > 0.034) this.slow++; else if (this.slow > 0) this.slow -= 0.25;
       if (this.slow > 90 && this.dprCap > 1) { this.dprCap = 1; this.slow = 0; this.resize(); }
+      if (window.innerWidth !== this.W || window.innerHeight !== this.H) this.resize();
+      if (!this.ready) return;
       const t = (now - this.t0) / 1000;
       const ctx = this.ctx, { W, H, horizon, moon } = this;
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
