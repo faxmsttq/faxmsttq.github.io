@@ -716,7 +716,8 @@
       this.labelRects = [];
       if (!this.showLabels) return;
       const maxY = this.H - this.bottomInset - 4;
-      labels.sort((a, b) => b[3] - a[3]);
+      const pri = (L) => (this.mine && this.mine.has(L[0].id) ? 2 : 0) + (this.focusId === L[0].id && now < this.focusUntil ? 2 : 0) + L[3];
+      labels.sort((a, b) => pri(b) - pri(a));
       for (const [e, x, y, s, alpha0] of labels) {
         const name = (e.rec.name || "").trim();
         const mine = this.mine && this.mine.has(e.id);
@@ -729,7 +730,9 @@
           e.label = { fs, src: name, text, w: ctx.measureText(text).width };
         }
         const L = e.label, w = L.w + 16, h = fs + 9;
-        const tries = [[0, 0], [0, -(h + 4)], [-(w / 2 + 6), 0], [w / 2 + 6, 0], [0, -(2 * h + 8)], [0, h + 4]];
+        const up = h + 4;
+        const tries = [[0, 0], [0, -up], [-(w / 2 + 6), 0], [w / 2 + 6, 0], [-(w / 2 + 6), -up], [w / 2 + 6, -up],
+          [0, -2 * up], [0, up], [-(w + 8), 0], [w + 8, 0], [0, -3 * up]];
         let rect = null;
         for (const [dx, dy] of tries) {
           const lx = clamp(x - w / 2 + dx, 6, this.W - w - 6), ly = clamp(y - h + dy, 6, maxY - h);
@@ -737,7 +740,8 @@
           if (!hit) { rect = { x: lx, y: ly, w, h, moved: dx !== 0 || dy !== 0 }; break; }
         }
         if (!rect) {
-          if (!mine && s < 0.7) continue;
+          const focusNow = this.focusId === e.id && now < this.focusUntil;
+          if (!mine && !focusNow) continue;
           rect = { x: clamp(x - w / 2, 6, this.W - w - 6), y: clamp(y - h, 6, maxY - h), w, h, moved: false };
         }
         placed.push(rect);
