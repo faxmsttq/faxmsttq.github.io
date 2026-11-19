@@ -476,11 +476,11 @@
 
 <div class="toast lg" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795115166"></script>
-<script src="js/art.js?v=1795115166"></script>
-<script src="js/api.js?v=1795115166"></script>
-<script src="js/river.js?v=1795115166"></script>
-<script src="js/siamsi.js?v=1795115166"></script>
+<script src="config.js?v=1795115237"></script>
+<script src="js/art.js?v=1795115237"></script>
+<script src="js/api.js?v=1795115237"></script>
+<script src="js/river.js?v=1795115237"></script>
+<script src="js/siamsi.js?v=1795115237"></script>
 <script>
 (() => {
   "use strict";
@@ -617,7 +617,7 @@
       const pt = parseFloat(cs.paddingTop) || 0;
       const boxTop = t.offsetParent.getBoundingClientRect().top + t.offsetTop;
       const glyphTop = boxTop + pt + (lineH - (fAsc + fDesc)) / 2 + fAsc - asc;
-      const margin = Math.max(10, fs * 0.08);
+      const margin = Math.max(16, fs * 0.18);
       if (glyphTop < margin) t.style.paddingTop = Math.ceil(pt + margin - glyphTop) + "px";
     } catch (e) {}
   }
