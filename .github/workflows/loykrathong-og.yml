@@ -1,0 +1,58 @@
+# ถ่ายรูปตัวอย่างลิงก์ (og:image 1200x630) จากเว็บจริง ด้วยฟอนต์จริง
+# ทำงานเองเมื่อแก้ loykrathong/og-request.txt หรือกด Run workflow ในแท็บ Actions
+name: loykrathong og image
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['loykrathong/og-request.txt']
+permissions:
+  contents: write
+concurrency:
+  group: loykrathong-og
+  cancel-in-progress: true
+jobs:
+  shot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait until GitHub Pages serves this version
+        run: |
+          want=$(tr -d '[:space:]' < loykrathong/og-request.txt)
+          for i in $(seq 1 40); do
+            if curl -fsSL "https://faxmsttq.github.io/loykrathong/?nocache=$RANDOM$RANDOM" | grep -q "v=$want"; then echo "live"; exit 0; fi
+            sleep 15
+          done
+          echo "Pages has not updated yet; taking the shot anyway"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.49.1 >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Take screenshot
+        run: |
+          cat > shot.mjs <<'JS'
+          import { chromium } from "playwright";
+          const browser = await chromium.launch();
+          const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
+          await page.goto("https://faxmsttq.github.io/loykrathong/?demo=1&og=1&t=" + Date.now(), { waitUntil: "networkidle" });
+          await page.evaluate(() => document.fonts.ready);
+          await page.waitForTimeout(7000);
+          await page.screenshot({ path: "loykrathong/og-image.jpg", type: "jpeg", quality: 86 });
+          await browser.close();
+          JS
+          node shot.mjs
+          ls -la loykrathong/og-image.jpg
+      - name: Commit image
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add loykrathong/og-image.jpg
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git commit -m "Update loykrathong link preview image"
+          for i in 1 2 3; do git pull --rebase -q origin main && git push && exit 0; sleep 5; done
+          exit 1

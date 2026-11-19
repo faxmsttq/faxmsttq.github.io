@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>หลังบ้าน ลอยกระทง</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Charm:wght@700&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
@@ -319,17 +320,17 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795109582"></script>
-<script src="js/art.js?v=1795109582"></script>
-<script src="js/siamsi.js?v=1795109582"></script>
-<script src="js/api.js?v=1795109582"></script>
+<script src="config.js?v=1795112817"></script>
+<script src="js/art.js?v=1795112817"></script>
+<script src="js/siamsi.js?v=1795112817"></script>
+<script src="js/api.js?v=1795112817"></script>
 <script>
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
   const api = window.LKApi, Art = window.LKArt;
   const th = (n) => Number(n || 0).toLocaleString("th-TH-u-nu-thai");
-  const COLS = "id,name,wish,base,flower,status,flagged,sathu_count,created_at,is_public,lucky";
+  const COLS = "id,name,wish,base,flower,petal,tone,status,flagged,sathu_count,created_at,is_public,lucky";
   const PAGE = 50;
   let toastT;
   function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 3200); }
@@ -553,7 +554,7 @@
         setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = "ลบ"; } }, 3500);
       });
       tb.appendChild(tr);
-      Art.thumb(tr.querySelector("canvas"), r.base, r.flower, { t: 1 });
+      Art.thumb(tr.querySelector("canvas"), r.base, r.flower, { t: 1, petal: r.petal, tone: r.tone });
     });
     $("moreBtn").hidden = state.rows.length >= state.count;
     $("checkAll").checked = false;
@@ -593,9 +594,9 @@
   $("exportBtn").addEventListener("click", async () => {
     try {
       const rows = await D.exportAll();
-      const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-      const head = ["id", "ชื่อ", "คำอธิษฐาน", "ฐาน", "ดอกไม้", "สถานะ", "ติดคำต้องห้าม", "สาธุ", "เวลา"];
-      const lines = [head.map(esc).join(",")].concat(rows.map((r) => [r.id, r.name, r.wish, (Art.BASES[r.base] || {}).name, (Art.FLOWERS[r.flower] || {}).name,
+      const esc = (v) => { let t = String(v ?? ""); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
+      const head = ["id", "ชื่อ", "คำอธิษฐาน", "ฐาน", "กลีบ", "สีกลีบ", "ดอกไม้", "สถานะ", "ติดคำต้องห้าม", "สาธุ", "เวลา"];
+      const lines = [head.map(esc).join(",")].concat(rows.map((r) => [r.id, r.name, r.wish, (Art.BASES[r.base] || {}).name, (Art.PETALS[r.petal] || {}).name, (Art.TONES[r.tone] || {}).name, (Art.FLOWERS[r.flower] || {}).name,
         STATUS[r.status] || r.status, r.flagged ? "ใช่" : "", r.sathu_count, new Date(r.created_at).toLocaleString("th-TH")].map(esc).join(",")));
       const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
       const a = document.createElement("a");

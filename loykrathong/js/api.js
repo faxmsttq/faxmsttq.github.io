@@ -2,9 +2,10 @@
 (function () {
   "use strict";
   const cfg = window.LK_CONFIG || {};
-  const configured = !!(cfg.SUPABASE_URL && cfg.SUPABASE_KEY && /^https:\/\//.test(cfg.SUPABASE_URL));
+  const forceDemo = /[?&]demo=1\b/.test(location.search);
+  const configured = !forceDemo && !!(cfg.SUPABASE_URL && cfg.SUPABASE_KEY && /^https:\/\//.test(cfg.SUPABASE_URL));
   const SB_SRC = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0";
-  const COLS = "id,name,base,flower,sathu_count,created_at,is_public,public_wish,lucky"; // ไม่ดึงคำอธิษฐาน (เป็นความลับ)
+  const COLS = "id,name,base,flower,petal,tone,sathu_count,created_at,is_public,public_wish,lucky"; // ไม่ดึงคำอธิษฐาน (เป็นความลับ)
 
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -73,10 +74,12 @@
   ];
   function demoAll() {
     let list = store.get("lk-demo", null);
+    if (list && list.length && !list[0].petal) list = null;
     if (!list) {
       const now = Date.now();
       list = SAMPLE.map(([name, wish, base, flower], i) => ({
         id: uuid(), name, wish, base, flower, sathu_count: (i * 7) % 13, is_public: i % 3 === 0, public_wish: i % 3 === 0 ? wish : null, lucky: i === 4,
+        petal: ["phanom", "kulap", "lebmuenang", "phaka"][i % 4], tone: ["natural", "natural", "gold", "pandan", "pink", "pearl"][i % 6],
         created_at: new Date(now - (i * 23 + 4) * 60000).toISOString(), sample: true,
       }));
       store.set("lk-demo", list);
@@ -96,7 +99,7 @@
     store,
 
     async settings() {
-      const fallback = { event_name: "ลอยกระทง", tagline: "ลอยทุกข์ให้ไปกับสายน้ำ ฝากความหวังไว้กับแสงเทียน", announcement: "", is_open: true, require_approval: false };
+      const fallback = { event_name: "ลอยกระทงออนไลน์", tagline: "ลอยทุกข์ให้ไปกับสายน้ำ ฝากความหวังไว้กับแสงเทียน", announcement: "", is_open: true, require_approval: false };
       const c = await client();
       if (!c) return { ...fallback, ...store.get("lk-demo-settings", {}) };
       const { data, error } = await c.from("settings").select("event_name,tagline,announcement,is_open,require_approval").eq("id", 1).maybeSingle();
@@ -123,8 +126,9 @@
       return count;
     },
 
-    async float({ name, wish, base, flower, is_public, lucky }) {
-      const rec = { id: uuid(), name: (name || "").trim().slice(0, 30), wish: (wish || "").trim().slice(0, 140), base, flower, is_public: !!is_public, lucky: !!lucky };
+    async float({ name, wish, base, flower, petal, tone, is_public, lucky }) {
+      const rec = { id: uuid(), name: (name || "").trim().slice(0, 30), wish: (wish || "").trim().slice(0, 200), base, flower,
+        petal: petal || "phanom", tone: tone || "natural", is_public: !!is_public, lucky: !!lucky };
       const c = await client();
       if (!c) {
         const list = demoAll();
@@ -170,7 +174,8 @@
     /* กระทงของฉัน: เก็บคำอธิษฐานไว้ในเครื่องเจ้าของเท่านั้น */
     saveMine(rec) {
       const L = store.get("lk-mine-recs", []).filter((r) => r.id !== rec.id);
-      L.unshift({ id: rec.id, name: rec.name, wish: rec.wish, base: rec.base, flower: rec.flower, is_public: !!rec.is_public, lucky: !!rec.lucky, created_at: rec.created_at });
+      L.unshift({ id: rec.id, name: rec.name, wish: rec.wish, base: rec.base, flower: rec.flower, petal: rec.petal, tone: rec.tone,
+        is_public: !!rec.is_public, lucky: !!rec.lucky, created_at: rec.created_at });
       store.set("lk-mine-recs", L.slice(0, 100));
     },
     mine() { return store.get("lk-mine-recs", []); },

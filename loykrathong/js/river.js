@@ -1,9 +1,10 @@
-/* ลอยกระทง — ฉากแม่น้ำยามค่ำ (canvas) */
+/* ลอยกระทง — ฉากแม่น้ำ (canvas) กลางคืน / กลางวัน */
 (function () {
   "use strict";
   const A = window.LKArt;
   const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const TAU = Math.PI * 2;
 
   function h01(s) {
     let h = 2166136261;
@@ -18,6 +19,28 @@
     x.setTransform(dpr, 0, 0, dpr, 0, 0);
     return [c, x];
   }
+
+  /* ---------- สีของแต่ละช่วงเวลา ---------- */
+  const PAL = {
+    night: {
+      sky: [[0, "#060b19"], [0.45, "#0f1832"], [0.82, "#232749"], [1, "#3d3552"]],
+      trees: "#0a1020", ground: "#0a1020",
+      gold: ["#e6bb6c", "#a97b46", "#4a3428"], band: "rgba(80,50,30,.6)", shade: "rgba(12,12,30,.5)",
+      hall: { body: "#0c1324", roof: "#0c1324", face: "#141b31", edge: "rgba(226,178,98,.75)", lit: "#f3be6a" },
+      water: [[0, "#202a47"], [0.2, "#141d34"], [1, "#080f1e"]],
+      reflTint: "rgba(16,26,48,.35)", band2: "rgba(170,190,240,.022)", haze: "rgba(150,140,180,.1)",
+      vig: "rgba(3,6,14,.6)", shimmer: [170, 190, 240], glowK: 1,
+    },
+    day: {
+      sky: [[0, "#3f7fc4"], [0.45, "#79b2e3"], [0.82, "#bfdcf0"], [1, "#efe3cc"]],
+      trees: "#2c5232", ground: "#3c5a34",
+      gold: ["#ffe29a", "#d4a24f", "#8a6233"], band: "rgba(120,80,30,.45)", shade: "rgba(40,30,20,.18)",
+      hall: { body: "#efe4cf", roof: "#a83c28", face: "#c4462f", edge: "rgba(240,196,100,.95)", lit: "#5a4630" },
+      water: [[0, "#a9d0e6"], [0.18, "#6aa6cc"], [1, "#21557c"]],
+      reflTint: "rgba(70,130,180,.3)", band2: "rgba(255,255,255,.05)", haze: "rgba(255,255,255,.22)",
+      vig: "rgba(10,30,60,.22)", shimmer: [255, 255, 255], glowK: 0.32,
+    },
+  };
 
   /* ---------- สถาปัตยกรรมริมฝั่ง ---------- */
   function chedi(ctx, x, baseY, h, fill, band) {
@@ -51,31 +74,26 @@
     }
   }
 
-  function hall(ctx, x, baseY, w, h, fill, face, edge, lit) {
-    ctx.fillStyle = fill;
+  function hall(ctx, x, baseY, w, h, c) {
+    ctx.fillStyle = c.body;
     ctx.fillRect(x - w * 0.47, baseY - h * 0.34, w * 0.94, h * 0.34 + 2);
-    ctx.fillStyle = lit;
+    ctx.fillStyle = c.lit;
     for (let i = -2; i <= 2; i++) {
       const dw = i === 0 ? w * 0.09 : w * 0.05, dh = i === 0 ? h * 0.2 : h * 0.12;
       ctx.globalAlpha = i === 0 ? 0.9 : 0.55;
       ctx.fillRect(x + i * w * 0.17 - dw / 2, baseY - dh - h * 0.04, dw, dh);
     }
     ctx.globalAlpha = 1;
-    const tiers = [
-      [h, 0.42, 0.47],
-      [0.86 * h, 0.5, 0.4],
-      [0.72 * h, 0.58, 0.32],
-    ];
-    tiers.forEach(([apexH, hw, eave], i) => {
+    [[h, 0.42, 0.47], [0.86 * h, 0.5, 0.4], [0.72 * h, 0.58, 0.32]].forEach(([apexH, hw, eave], i) => {
       const ax = x, ay = baseY - apexH, ey = baseY - h * eave;
       const lx = x - w * hw, rx = x + w * hw;
-      ctx.fillStyle = i === 2 ? face : fill;
+      ctx.fillStyle = i === 2 ? c.face : c.roof;
       ctx.beginPath();
       ctx.moveTo(lx, ey);
       ctx.quadraticCurveTo(x - w * hw * 0.45, ay + (ey - ay) * 0.42, ax, ay);
       ctx.quadraticCurveTo(x + w * hw * 0.45, ay + (ey - ay) * 0.42, rx, ey);
       ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = edge; ctx.lineWidth = 1.3;
+      ctx.strokeStyle = c.edge; ctx.lineWidth = 1.3;
       ctx.beginPath();
       ctx.moveTo(lx - 3, ey - 4);
       ctx.quadraticCurveTo(lx, ey + 1, lx + 1, ey);
@@ -83,7 +101,6 @@
       ctx.quadraticCurveTo(x + w * hw * 0.45, ay + (ey - ay) * 0.42, rx - 1, ey);
       ctx.quadraticCurveTo(rx, ey + 1, rx + 3, ey - 4);
       ctx.stroke();
-      // ช่อฟ้า
       ctx.beginPath();
       ctx.moveTo(ax, ay);
       ctx.quadraticCurveTo(ax - 1, ay - h * 0.09, ax + h * 0.045, ay - h * 0.1);
@@ -91,7 +108,7 @@
     });
   }
 
-  function trees(ctx, W, horizon, rnd, color) {
+  function trees(ctx, W, horizon, rnd, color, day) {
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.moveTo(0, horizon + 2);
@@ -100,11 +117,17 @@
       ctx.lineTo(x, y);
     }
     ctx.lineTo(W, horizon + 2); ctx.closePath(); ctx.fill();
+    const blobs = [];
     for (let i = 0; i < W / 26; i++) {
       const x = rnd() * W, r = 6 + rnd() * 13, y = horizon - 8 - rnd() * 6;
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.arc(x + r * 0.8, y + r * 0.3, r * 0.75, 0, Math.PI * 2); ctx.fill();
+      blobs.push([x, y, r]);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.arc(x + r * 0.8, y + r * 0.3, r * 0.75, 0, TAU); ctx.fill();
     }
-    // ต้นตาล
+    if (day) {
+      ctx.fillStyle = "rgba(120,170,100,.35)";
+      blobs.forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x - r * 0.25, y - r * 0.3, r * 0.55, 0, TAU); ctx.fill(); });
+      ctx.fillStyle = color;
+    }
     for (let i = 0; i < Math.max(2, W / 380); i++) {
       const x = rnd() * W, hh = 34 + rnd() * 26, y0 = horizon - 8;
       ctx.strokeStyle = color; ctx.lineWidth = 2;
@@ -119,19 +142,34 @@
     }
   }
 
+  function cloud(ctx, x, y, s) {
+    ctx.fillStyle = "rgba(170,195,222,.55)";
+    ctx.beginPath(); ctx.ellipse(x + 6 * s, y + 14 * s, 74 * s, 14 * s, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.93)";
+    [[-46, 4, 24], [-18, -10, 32], [16, -16, 38], [50, -2, 28], [74, 8, 18], [-66, 10, 16], [0, 6, 30]].forEach(([dx, dy, r]) => {
+      ctx.beginPath(); ctx.arc(x + dx * s, y + dy * s, r * s, 0, TAU); ctx.fill();
+    });
+  }
+
   /* ---------- ฉาก ---------- */
   class River {
     constructor(canvas) {
       this.c = canvas;
       this.ctx = canvas.getContext("2d");
+      this.mode = "night";
       this.items = new Map();
       this.order = [];
       this.ripples = [];
       this.lanterns = [];
       this.sparks = [];
+      this.birds = [];
       this.onPick = null;
       this.onHover = null;
       this.hover = null;
+      this.mine = null;
+      this.bottomInset = 0;
+      this.showLabels = true;
+      this.labelRects = [];
       this.focusId = null; this.focusUntil = 0;
       this.t0 = performance.now();
       this.last = this.t0;
@@ -148,13 +186,22 @@
       requestAnimationFrame(this.frame);
     }
 
+    setMode(mode) {
+      const m = mode === "day" ? "day" : "night";
+      if (m === this.mode) return;
+      this.mode = m;
+      this.lanterns = []; this.sparks = [];
+      if (this.ready) this.prerender();
+    }
+    setBottomInset(px) { this.bottomInset = Math.max(0, px || 0); }
+
     resize() {
       const W = window.innerWidth, H = window.innerHeight;
       this.ready = false;
       this.W = W; this.H = H;
       if (W < 40 || H < 40) return;
       const dpr = Math.min(window.devicePixelRatio || 1, this.dprCap);
-      this.W = W; this.H = H; this.dpr = dpr;
+      this.dpr = dpr;
       this.c.width = Math.round(W * dpr); this.c.height = Math.round(H * dpr);
       this.c.style.width = W + "px"; this.c.style.height = H + "px";
       const portrait = W / H < 0.8;
@@ -172,84 +219,108 @@
         const k = Math.pow(rnd(), 1.5);
         return { x: rnd() * W, k, y: this.horizon + 3 + (H - this.horizon) * k, w: 3 + k * 46, p: rnd() * 7, v: 2 + k * 7 };
       });
+      this.birds = Array.from({ length: portrait ? 3 : 5 }, (_, i) => ({
+        x: rnd() * W, y: this.horizon * (0.18 + rnd() * 0.4), s: 5 + rnd() * 5, v: 14 + rnd() * 16, ph: rnd() * 7,
+      }));
       this.ready = true;
     }
 
     prerender() {
       const { W, H, dpr, horizon, moon } = this;
+      const day = this.mode === "day", P = PAL[this.mode];
       const rnd = A.rngFrom("bank" + Math.round(W / 50));
-      // ท้องฟ้า + จันทร์
+      // ท้องฟ้า
       const [sky, s] = layer(W, horizon + 4, dpr);
       let g = s.createLinearGradient(0, 0, 0, horizon);
-      g.addColorStop(0, "#060b19"); g.addColorStop(0.45, "#0f1832"); g.addColorStop(0.82, "#232749"); g.addColorStop(1, "#3d3552");
+      P.sky.forEach(([o, c]) => g.addColorStop(o, c));
       s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
-      g = s.createRadialGradient(this.templeX, horizon, 0, this.templeX, horizon, W * 0.55);
-      g.addColorStop(0, "rgba(246,170,90,.16)"); g.addColorStop(1, "rgba(246,170,90,0)");
-      s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
-      g = s.createRadialGradient(moon.x, moon.y, moon.r * 0.8, moon.x, moon.y, moon.r * 7);
-      g.addColorStop(0, "rgba(245,228,185,.22)"); g.addColorStop(0.35, "rgba(220,205,190,.07)"); g.addColorStop(1, "rgba(200,190,200,0)");
-      s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
-      g = s.createRadialGradient(moon.x - moon.r * 0.3, moon.y - moon.r * 0.3, moon.r * 0.1, moon.x, moon.y, moon.r);
-      g.addColorStop(0, "#fffbf0"); g.addColorStop(0.6, "#f5e8c8"); g.addColorStop(1, "#e2cc9a");
-      s.fillStyle = g; s.beginPath(); s.arc(moon.x, moon.y, moon.r, 0, Math.PI * 2); s.fill();
-      s.save(); s.beginPath(); s.arc(moon.x, moon.y, moon.r, 0, Math.PI * 2); s.clip();
-      try { s.filter = "blur(" + Math.max(1, moon.r * 0.06) + "px)"; } catch (e) {}
-      [[-0.3, -0.15, 0.32], [0.25, 0.2, 0.24], [0.05, -0.4, 0.16], [-0.1, 0.38, 0.2], [0.42, -0.2, 0.12]].forEach(([dx, dy, rr]) => {
-        s.fillStyle = "rgba(170,150,115,.22)";
-        s.beginPath(); s.arc(moon.x + dx * moon.r, moon.y + dy * moon.r, rr * moon.r, 0, Math.PI * 2); s.fill();
-      });
-      s.restore();
-      s.save();
-      try { s.filter = "blur(10px)"; } catch (e) {}
-      s.fillStyle = "rgba(20,24,48,.45)";
-      s.beginPath(); s.ellipse(moon.x - moon.r * 1.6, moon.y + moon.r * 0.9, moon.r * 3.2, moon.r * 0.28, -0.05, 0, Math.PI * 2); s.fill();
-      s.fillStyle = "rgba(20,24,48,.3)";
-      s.beginPath(); s.ellipse(moon.x + moon.r * 2.2, moon.y + moon.r * 1.6, moon.r * 2.6, moon.r * 0.2, 0.04, 0, Math.PI * 2); s.fill();
-      s.restore();
-      {
-        const ch0 = clamp(H * (this.portrait ? 0.12 : 0.16), 60, 170), tx0 = this.templeX;
-        const tg = s.createRadialGradient(tx0, horizon - ch0 * 0.4, 0, tx0, horizon - ch0 * 0.4, ch0 * 1.5);
+      const ch0 = clamp(H * (this.portrait ? 0.12 : 0.16), 60, 170);
+      if (day) {
+        g = s.createRadialGradient(moon.x, moon.y, moon.r * 0.6, moon.x, moon.y, moon.r * 9);
+        g.addColorStop(0, "rgba(255,248,222,.75)"); g.addColorStop(0.3, "rgba(255,244,210,.25)"); g.addColorStop(1, "rgba(255,244,210,0)");
+        s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
+        g = s.createRadialGradient(moon.x, moon.y, 0, moon.x, moon.y, moon.r * 0.95);
+        g.addColorStop(0, "#fffef8"); g.addColorStop(0.75, "#fff6d2"); g.addColorStop(1, "#ffe7a3");
+        s.fillStyle = g; s.beginPath(); s.arc(moon.x, moon.y, moon.r * 0.95, 0, TAU); s.fill();
+      } else {
+        g = s.createRadialGradient(this.templeX, horizon, 0, this.templeX, horizon, W * 0.55);
+        g.addColorStop(0, "rgba(246,170,90,.16)"); g.addColorStop(1, "rgba(246,170,90,0)");
+        s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
+        g = s.createRadialGradient(moon.x, moon.y, moon.r * 0.8, moon.x, moon.y, moon.r * 7);
+        g.addColorStop(0, "rgba(245,228,185,.22)"); g.addColorStop(0.35, "rgba(220,205,190,.07)"); g.addColorStop(1, "rgba(200,190,200,0)");
+        s.fillStyle = g; s.fillRect(0, 0, W, horizon + 4);
+        g = s.createRadialGradient(moon.x - moon.r * 0.3, moon.y - moon.r * 0.3, moon.r * 0.1, moon.x, moon.y, moon.r);
+        g.addColorStop(0, "#fffbf0"); g.addColorStop(0.6, "#f5e8c8"); g.addColorStop(1, "#e2cc9a");
+        s.fillStyle = g; s.beginPath(); s.arc(moon.x, moon.y, moon.r, 0, TAU); s.fill();
+        s.save(); s.beginPath(); s.arc(moon.x, moon.y, moon.r, 0, TAU); s.clip();
+        try { s.filter = "blur(" + Math.max(1, moon.r * 0.06) + "px)"; } catch (e) {}
+        [[-0.3, -0.15, 0.32], [0.25, 0.2, 0.24], [0.05, -0.4, 0.16], [-0.1, 0.38, 0.2], [0.42, -0.2, 0.12]].forEach(([dx, dy, rr]) => {
+          s.fillStyle = "rgba(170,150,115,.22)";
+          s.beginPath(); s.arc(moon.x + dx * moon.r, moon.y + dy * moon.r, rr * moon.r, 0, TAU); s.fill();
+        });
+        s.restore();
+        s.save();
+        try { s.filter = "blur(10px)"; } catch (e) {}
+        s.fillStyle = "rgba(20,24,48,.45)";
+        s.beginPath(); s.ellipse(moon.x - moon.r * 1.6, moon.y + moon.r * 0.9, moon.r * 3.2, moon.r * 0.28, -0.05, 0, TAU); s.fill();
+        s.fillStyle = "rgba(20,24,48,.3)";
+        s.beginPath(); s.ellipse(moon.x + moon.r * 2.2, moon.y + moon.r * 1.6, moon.r * 2.6, moon.r * 0.2, 0.04, 0, TAU); s.fill();
+        s.restore();
+        const tg = s.createRadialGradient(this.templeX, horizon - ch0 * 0.4, 0, this.templeX, horizon - ch0 * 0.4, ch0 * 1.5);
         tg.addColorStop(0, "rgba(255,190,110,.24)"); tg.addColorStop(1, "rgba(255,190,110,0)");
         s.fillStyle = tg; s.fillRect(0, 0, W, horizon + 4);
       }
       this.sky = sky;
 
+      // เมฆ (กลางวัน) วาดเป็นชั้นแยก เลื่อนได้ต่อเนื่อง
+      this.clouds = null;
+      if (day) {
+        const [cl, c] = layer(W, horizon, dpr);
+        const cr = A.rngFrom("clouds" + Math.round(W / 50));
+        try { c.filter = "blur(3px)"; } catch (e) {}
+        for (let i = 0; i < Math.max(4, Math.round(W / 260)); i++) {
+          const x = cr() * W, y = horizon * (0.12 + cr() * 0.5), sc = (0.5 + cr() * 0.8) * clamp(W / 1200, 0.55, 1.2);
+          [x - W, x, x + W].forEach((xx) => cloud(c, xx, y, sc));
+        }
+        this.clouds = cl;
+      }
+
       // ฝั่งไกล
       const [bank, b] = layer(W, horizon + 4, dpr);
-      trees(b, W, horizon, rnd, "#0a1020");
-      const tx = this.templeX;
-      const ch = clamp(H * (this.portrait ? 0.12 : 0.16), 60, 170);
+      trees(b, W, horizon, rnd, P.trees, day);
+      const tx = this.templeX, ch = ch0;
       const gold = b.createLinearGradient(0, horizon - ch, 0, horizon);
-      gold.addColorStop(0, "#e6bb6c"); gold.addColorStop(0.5, "#a97b46"); gold.addColorStop(1, "#4a3428");
-      chedi(b, tx - ch * 0.62, horizon - 4, ch * 0.46, gold, "rgba(80,50,30,.55)");
-      chedi(b, tx + ch * 1.55, horizon - 4, ch * 0.42, gold, "rgba(80,50,30,.55)");
-      chedi(b, tx, horizon - 4, ch, gold, "rgba(80,50,30,.6)");
+      gold.addColorStop(0, P.gold[0]); gold.addColorStop(0.5, P.gold[1]); gold.addColorStop(1, P.gold[2]);
+      chedi(b, tx - ch * 0.62, horizon - 4, ch * 0.46, gold, P.band);
+      chedi(b, tx + ch * 1.55, horizon - 4, ch * 0.42, gold, P.band);
+      chedi(b, tx, horizon - 4, ch, gold, P.band);
       const shade = b.createLinearGradient(tx - ch * 0.3, 0, tx + ch * 0.15, 0);
-      shade.addColorStop(0, "rgba(12,12,30,.5)"); shade.addColorStop(1, "rgba(12,12,30,0)");
+      shade.addColorStop(0, P.shade); shade.addColorStop(1, "rgba(0,0,0,0)");
       b.save(); b.globalCompositeOperation = "source-atop"; b.fillStyle = shade; b.fillRect(tx - ch, horizon - ch * 1.05, ch * 1.1, ch * 1.1); b.restore();
-      hall(b, tx + ch * 0.82, horizon - 3, ch * 0.62, ch * 0.5, "#0c1324", "#141b31", "rgba(226,178,98,.75)", "#f3be6a");
-      b.fillStyle = "#0a1020"; b.fillRect(0, horizon - 4, W, 8);
+      hall(b, tx + ch * 0.82, horizon - 3, ch * 0.62, ch * 0.5, P.hall);
+      b.fillStyle = P.ground; b.fillRect(0, horizon - 4, W, 8);
       this.lights = [];
-      const nL = Math.round(W / 22);
-      for (let i = 0; i < nL; i++) {
-        const x = rnd() * W, y = horizon - 2 - rnd() * 4;
-        const warm = rnd() < 0.85;
-        this.lights.push({ x, y, warm, p: rnd() * 6 });
-        b.globalCompositeOperation = "lighter";
-        b.globalAlpha = 0.55;
-        b.drawImage(A.softGlow, x - 7, y - 7, 14, 14);
-        b.globalAlpha = 1; b.globalCompositeOperation = "source-over";
-        b.fillStyle = warm ? "#ffd38a" : "#e9e4ff";
-        b.fillRect(x - 0.7, y - 0.7, 1.4, 1.4);
+      if (!day) {
+        const nL = Math.round(W / 22);
+        for (let i = 0; i < nL; i++) {
+          const x = rnd() * W, y = horizon - 2 - rnd() * 4;
+          const warm = rnd() < 0.85;
+          this.lights.push({ x, y, warm, p: rnd() * 6 });
+          b.globalCompositeOperation = "lighter";
+          b.globalAlpha = 0.55;
+          b.drawImage(A.softGlow, x - 7, y - 7, 14, 14);
+          b.globalAlpha = 1; b.globalCompositeOperation = "source-over";
+          b.fillStyle = warm ? "#ffd38a" : "#e9e4ff";
+          b.fillRect(x - 0.7, y - 0.7, 1.4, 1.4);
+        }
       }
       this.bank = bank;
 
       // น้ำ
       const [water, w] = layer(W, H, dpr);
       g = w.createLinearGradient(0, horizon, 0, H);
-      g.addColorStop(0, "#202a47"); g.addColorStop(0.2, "#141d34"); g.addColorStop(1, "#080f1e");
+      P.water.forEach(([o, c]) => g.addColorStop(o, c));
       w.fillStyle = g; w.fillRect(0, horizon, W, H - horizon);
-      // เงาวัดในน้ำ
       const [tmp, t] = layer(W, H, dpr);
       t.save();
       try { t.filter = "blur(2.5px)"; } catch (e) {}
@@ -257,16 +328,16 @@
       t.drawImage(bank, 0, 0, W, horizon + 4);
       t.restore();
       t.globalCompositeOperation = "source-atop";
-      t.fillStyle = "rgba(16,26,48,.35)"; t.fillRect(0, 0, W, H);
+      t.fillStyle = P.reflTint; t.fillRect(0, 0, W, H);
       t.globalCompositeOperation = "destination-in";
       g = t.createLinearGradient(0, horizon, 0, horizon + ch * 1.1);
-      g.addColorStop(0, "rgba(0,0,0,.5)"); g.addColorStop(1, "rgba(0,0,0,0)");
+      g.addColorStop(0, day ? "rgba(0,0,0,.42)" : "rgba(0,0,0,.5)"); g.addColorStop(1, "rgba(0,0,0,0)");
       t.fillStyle = g; t.fillRect(0, 0, W, H);
       t.globalCompositeOperation = "source-over";
       t.clearRect(0, 0, W, horizon);
       w.drawImage(tmp, 0, 0, W, H);
       w.globalCompositeOperation = "lighter";
-      w.globalAlpha = 0.16;
+      w.globalAlpha = day ? 0.22 : 0.16;
       w.drawImage(A.softGlow, moon.x - moon.r * 2.6, horizon - (H - horizon) * 0.15, moon.r * 5.2, (H - horizon) * 1.25);
       w.globalAlpha = 1;
       this.lights.forEach((L) => {
@@ -278,23 +349,23 @@
       });
       w.globalCompositeOperation = "source-over";
       for (let y = horizon + 2; y < H; y += 2 + (y - horizon) * 0.05) {
-        w.fillStyle = "rgba(170,190,240,.022)";
+        w.fillStyle = P.band2;
         w.fillRect(0, y, W, 1);
       }
       g = w.createLinearGradient(0, horizon - H * 0.04, 0, horizon + H * 0.05);
-      g.addColorStop(0, "rgba(150,140,180,0)"); g.addColorStop(0.5, "rgba(150,140,180,.1)"); g.addColorStop(1, "rgba(150,140,180,0)");
+      g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(0.5, P.haze); g.addColorStop(1, "rgba(255,255,255,0)");
       w.fillStyle = g; w.fillRect(0, horizon - H * 0.04, W, H * 0.09);
       this.water = water;
 
       // ขอบมืด + เกรน
       const [vig, v] = layer(W, H, 1);
       g = v.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.35, W / 2, H * 0.55, Math.max(W, H) * 0.85);
-      g.addColorStop(0, "rgba(3,6,14,0)"); g.addColorStop(1, "rgba(3,6,14,.6)");
+      g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, P.vig);
       v.fillStyle = g; v.fillRect(0, 0, W, H);
       const grain = document.createElement("canvas"); grain.width = grain.height = 160;
       const gx = grain.getContext("2d"); const id = gx.createImageData(160, 160);
       const gr = A.rngFrom("grain");
-      for (let i = 0; i < id.data.length; i += 4) { const n = gr() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = n; id.data[i + 3] = 14; }
+      for (let i = 0; i < id.data.length; i += 4) { const n = gr() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = n; id.data[i + 3] = day ? 9 : 14; }
       gx.putImageData(id, 0, 0);
       v.fillStyle = v.createPattern(grain, "repeat"); v.fillRect(0, 0, W, H);
       this.vig = vig;
@@ -302,7 +373,8 @@
 
     /* ---------- ข้อมูลกระทง ---------- */
     entity(rec, fresh) {
-      const d = fresh ? 0.88 : 0.05 + 0.95 * Math.pow(h01(rec.id), 0.72);
+      let d = fresh ? 0.88 : 0.05 + 0.95 * Math.pow(h01(rec.id), 0.72);
+      if (!fresh && this.mine && this.mine.has(rec.id)) d = Math.max(d, 0.74);
       return { rec, id: rec.id, d, seed: h01(rec.id + "s") * 100, phase: h01(rec.id + "p"), born: fresh ? performance.now() : 0, fresh, bbox: null };
     }
     resort() { this.order = [...this.items.values()].sort((a, b) => a.d - b.d); }
@@ -321,35 +393,70 @@
       this.items.set(rec.id, this.entity(rec, false));
       this.resort();
     }
+    placeAt(e, target) {
+      const { span, m, v } = this.motion(e);
+      const T = Date.now() / 1000;
+      e.phase = ((((target + m - T * v) % span) + span) % span) / span;
+    }
     add(rec) {
       if (!this.ready) { this.items.set(rec.id, this.entity(rec, false)); this.resort(); return; }
       const e = this.entity(rec, true);
-      const { span, m, v } = this.motion(e);
       const target = this.W * (this.portrait ? 0.5 : 0.42);
-      const T = Date.now() / 1000;
-      e.phase = ((((target + m - T * v) % span) + span) % span) / span;
+      this.placeAt(e, target);
       this.items.set(rec.id, e);
       this.resort();
       setTimeout(() => { const s = this.scaleOf(e.d); this.ripples.push({ x: target, y: this.waterYOf(e.d), s, t0: performance.now() }); }, 650);
     }
     remove(id) { if (this.items.delete(id)) this.resort(); }
-    focus(id) { this.focusId = id; this.focusUntil = performance.now() + 4000; }
+    focus(id) {
+      const e = this.items.get(id);
+      if (!e) return false;
+      if (this.ready) {
+        const { span, m, v } = this.motion(e);
+        const x = ((e.phase * span + (Date.now() / 1000) * v) % span) - m;
+        if (x < this.W * 0.12 || x > this.W * 0.88) this.placeAt(e, this.W * 0.5);
+      }
+      this.focusId = id; this.focusUntil = performance.now() + 6000;
+      return true;
+    }
 
+    posOf(id) {
+      const e = this.items.get(id);
+      if (!e || !e.bbox) return null;
+      const x = (e.bbox[0] + e.bbox[2]) / 2;
+      if (x < 0 || x > this.W) return null;
+      return { x, y: e.bbox[1] };
+    }
     scaleOf(d) { return 0.13 + 0.87 * Math.pow(d, 1.3); }
-    waterYOf(d) { return this.horizon + 4 + (this.H - this.horizon - 4) * (0.03 + 0.76 * Math.pow(d, 1.3)); }
+    waterYOf(d) {
+      const bottom = this.H - this.bottomInset - 8;
+      return this.horizon + 4 + Math.max(40, bottom - this.horizon - 4) * (0.04 + 0.88 * Math.pow(d, 1.3));
+    }
     motion(e) {
       const s = this.scaleOf(e.d), wpx = this.baseW * s, m = wpx * 0.7 + 30, span = this.W + 2 * m;
       const v = (this.W / 1400) * (6 + 20 * e.d) + 1.2;
       return { s, wpx, m, span, v };
     }
 
-    /* ---------- เลือก / ชี้ ---------- */
+    /* ---------- เลือก / ชี้ (พื้นที่แตะกว้างกว่าตัวกระทง) ---------- */
     hitAt(cx, cy) {
-      for (let i = this.order.length - 1; i >= 0; i--) {
-        const e = this.order[i], b = e.bbox;
-        if (b && cx >= b[0] && cx <= b[2] && cy >= b[1] && cy <= b[3]) return e;
+      for (let i = this.labelRects.length - 1; i >= 0; i--) {
+        const L = this.labelRects[i], r = L.rect;
+        if (cx >= r.x - 6 && cx <= r.x + r.w + 6 && cy >= r.y - 6 && cy <= r.y + r.h + 6) return L.e;
       }
-      return null;
+      let best = null, bestScore = Infinity;
+      for (const e of this.order) {
+        const b = e.bbox;
+        if (!b) continue;
+        const bw = b[2] - b[0], bh = b[3] - b[1];
+        const ex = Math.max(16, (52 - bw) / 2), ey = Math.max(16, (52 - bh) / 2);
+        if (cx < b[0] - ex || cx > b[2] + ex || cy < b[1] - ey || cy > b[3] + ey) continue;
+        const mx = (b[0] + b[2]) / 2, my = (b[1] + b[3]) / 2;
+        const dist = Math.hypot((cx - mx) / (bw / 2 + ex), (cy - my) / (bh / 2 + ey));
+        const score = dist - e.d * 0.35;
+        if (score < bestScore) { bestScore = score; best = e; }
+      }
+      return best;
     }
     pick(ev) {
       const r = this.c.getBoundingClientRect();
@@ -364,7 +471,7 @@
       if (this.hover === e) return;
       this.hover = e;
       this.c.style.cursor = e ? "pointer" : "default";
-      if (this.onHover) this.onHover(e ? e.rec : null, e ? { x: (e.bbox[0] + e.bbox[2]) / 2, y: e.bbox[1] } : null);
+      if (this.onHover) this.onHover(e ? e.rec : null);
     }
 
     /* ---------- อนุภาค ---------- */
@@ -382,7 +489,7 @@
       const col = cols[Math.floor(Math.random() * cols.length)];
       const n = 56, sp = clamp(this.W / 14, 50, 110);
       for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + Math.random() * 0.1, v = sp * (0.7 + Math.random() * 0.35);
+        const a = (i / n) * TAU + Math.random() * 0.1, v = sp * (0.7 + Math.random() * 0.35);
         this.sparks.push({ x, y, px: x, py: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0, life: 1.5 + Math.random() * 0.7, col });
       }
     }
@@ -398,96 +505,139 @@
       if (!this.ready) return;
       const t = (now - this.t0) / 1000;
       const ctx = this.ctx, { W, H, horizon, moon } = this;
+      const day = this.mode === "day";
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
       ctx.drawImage(this.sky, 0, 0, W, horizon + 4);
 
-      // ดาว
-      ctx.fillStyle = "#fff";
-      for (const s of this.stars) {
-        const dx = s.x - moon.x, dy = s.y - moon.y;
-        if (dx * dx + dy * dy < moon.r * moon.r * 4) continue;
-        ctx.globalAlpha = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
-        ctx.fillRect(s.x, s.y, s.r, s.r);
+      if (day) {
+        if (this.clouds) {
+          const off = (t * 4) % W;
+          ctx.drawImage(this.clouds, -off, 0, W, horizon);
+          ctx.drawImage(this.clouds, W - off, 0, W, horizon);
+        }
+        this.drawBirds(ctx, dt, t);
+      } else {
+        ctx.fillStyle = "#fff";
+        for (const s of this.stars) {
+          const dx = s.x - moon.x, dy = s.y - moon.y;
+          if (dx * dx + dy * dy < moon.r * moon.r * 4) continue;
+          ctx.globalAlpha = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
+          ctx.fillRect(s.x, s.y, s.r, s.r);
+        }
+        ctx.globalAlpha = 1;
+        if (!reduceMotion) {
+          if (t > this.nextLantern) { this.spawnLantern(false); this.nextLantern = t + 0.9 + Math.random() * 1.4; }
+          if (t > this.nextNear) { this.spawnLantern(true); this.nextNear = t + 10 + Math.random() * 12; }
+          if (t > this.nextFirework) { this.firework(); this.nextFirework = t + 9 + Math.random() * 10; }
+        }
+        this.drawSparks(ctx, dt);
+        this.drawLanterns(ctx, dt, t, false);
       }
-      ctx.globalAlpha = 1;
-
-      // โคมลอย / พลุ (อยู่หลังฝั่ง)
-      if (!reduceMotion) {
-        if (t > this.nextLantern) { this.spawnLantern(false); this.nextLantern = t + 0.9 + Math.random() * 1.4; }
-        if (t > this.nextNear) { this.spawnLantern(true); this.nextNear = t + 10 + Math.random() * 12; }
-        if (t > this.nextFirework) { this.firework(); this.nextFirework = t + 9 + Math.random() * 10; }
-      }
-      this.drawSparks(ctx, dt);
-      this.drawLanterns(ctx, dt, t, false);
 
       ctx.drawImage(this.bank, 0, 0, W, horizon + 4);
-      // ไฟริมฝั่งกระพริบเบา ๆ
-      ctx.globalCompositeOperation = "lighter";
-      for (const L of this.lights) {
-        const a = 0.15 + 0.2 * Math.sin(t * 1.3 + L.p);
-        if (a <= 0.05) continue;
-        ctx.globalAlpha = a;
-        ctx.drawImage(A.softGlow, L.x - 5, L.y - 5, 10, 10);
+      if (!day) {
+        ctx.globalCompositeOperation = "lighter";
+        for (const L of this.lights) {
+          const a = 0.15 + 0.2 * Math.sin(t * 1.3 + L.p);
+          if (a <= 0.05) continue;
+          ctx.globalAlpha = a;
+          ctx.drawImage(A.softGlow, L.x - 5, L.y - 5, 10, 10);
+        }
+        ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
       }
-      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
 
       ctx.drawImage(this.water, 0, 0, W, H);
       this.drawWaterLight(ctx, t, dt);
       this.drawKrathongs(ctx, t, now);
       this.drawRipples(ctx, now);
-      this.drawLanterns(ctx, dt, t, true);
+      if (!day) this.drawLanterns(ctx, dt, t, true);
       ctx.drawImage(this.vig, 0, 0, W, H);
+    }
+
+    drawBirds(ctx, dt, t) {
+      ctx.strokeStyle = "rgba(30,42,62,.75)"; ctx.lineWidth = 1.4; ctx.lineCap = "round";
+      for (const b of this.birds) {
+        b.x += b.v * dt;
+        if (b.x > this.W + 30) { b.x = -30; b.y = this.horizon * (0.18 + Math.random() * 0.4); }
+        const f = Math.sin(t * 7 + b.ph) * 0.6, y = b.y + Math.sin(t * 0.8 + b.ph) * 4;
+        ctx.beginPath();
+        ctx.moveTo(b.x - b.s, y - b.s * f);
+        ctx.quadraticCurveTo(b.x - b.s * 0.5, y - b.s * 0.5, b.x, y);
+        ctx.quadraticCurveTo(b.x + b.s * 0.5, y - b.s * 0.5, b.x + b.s, y - b.s * f);
+        ctx.stroke();
+      }
     }
 
     drawWaterLight(ctx, t, dt) {
       const { W, H, horizon, moon } = this;
+      const day = this.mode === "day", sh = PAL[this.mode].shimmer;
       ctx.globalCompositeOperation = "lighter";
       for (const s of this.shimmer) {
         s.x += s.v * dt;
         if (s.x > W + 50) s.x = -50;
-        const a = 0.03 + 0.09 * (0.5 + 0.5 * Math.sin(t * (0.8 + s.k) + s.p));
-        ctx.fillStyle = `rgba(170,190,240,${a})`;
+        const a = (day ? 0.06 : 0.03) + (day ? 0.16 : 0.09) * (0.5 + 0.5 * Math.sin(t * (0.8 + s.k) + s.p));
+        ctx.fillStyle = `rgba(${sh[0]},${sh[1]},${sh[2]},${a})`;
         ctx.fillRect(s.x, s.y, s.w, 1 + s.k);
       }
-      // ทางจันทร์ (ขีดแสงนุ่ม ๆ แตกเป็นช่วง)
       const span = H - horizon;
-      for (let y = horizon + 3; y < H; y += 3 + (y - horizon) * 0.035) {
-        const k = (y - horizon) / span;
-        const n = 0.5 + 0.5 * Math.sin(t * 1.3 + y * 0.083) * Math.sin(t * 0.45 + y * 0.021);
-        const base = moon.r * (0.45 + k * 2.6);
-        const a = 0.55 * Math.pow(1 - k, 1.35) * (0.45 + 0.55 * n);
-        if (a < 0.015) continue;
-        const cx = moon.x + Math.sin(t * 0.6 + y * 0.04) * moon.r * 0.3 * (0.3 + k);
-        const hh = 1.4 + k * 3.2;
-        const segs = n > 0.55 ? 1 : 2;
-        for (let j = 0; j < segs; j++) {
-          const off = segs === 1 ? 0 : (j ? 1 : -1) * base * (0.25 + 0.15 * Math.sin(t + y));
-          const w = base * (segs === 1 ? 0.9 + 0.5 * n : 0.45 + 0.3 * n);
-          ctx.globalAlpha = a;
-          ctx.drawImage(A.softGlow, cx + off - w / 2, y - hh, w, hh * 2);
+      if (day) {
+        // ประกายแดดบนผิวน้ำ
+        for (let y = horizon + 3, i = 0; y < H; y += 3 + (y - horizon) * 0.03, i++) {
+          const k = (y - horizon) / span;
+          const width = moon.r * (0.8 + k * 3.2);
+          for (let j = 0; j < 2; j++) {
+            const ph = Math.sin(i * 12.9898 + j * 78.233) * 43758.5453;
+            const r = ph - Math.floor(ph);
+            const x = moon.x + (r - 0.5) * width * 2 + Math.sin(t * 0.7 + y * 0.05) * 6;
+            const tw = 0.5 + 0.5 * Math.sin(t * 4 + i * 1.7 + j * 2.3);
+            const a = 0.75 * Math.pow(1 - k, 1.1) * tw;
+            if (a < 0.05) continue;
+            ctx.globalAlpha = a;
+            const len = 3 + k * 10;
+            ctx.drawImage(A.softGlow, x - len, y - 1.5 - k * 1.5, len * 2, 3 + k * 3);
+          }
         }
+        ctx.globalAlpha = 1;
+      } else {
+        for (let y = horizon + 3; y < H; y += 3 + (y - horizon) * 0.035) {
+          const k = (y - horizon) / span;
+          const n = 0.5 + 0.5 * Math.sin(t * 1.3 + y * 0.083) * Math.sin(t * 0.45 + y * 0.021);
+          const base = moon.r * (0.45 + k * 2.6);
+          const a = 0.55 * Math.pow(1 - k, 1.35) * (0.45 + 0.55 * n);
+          if (a < 0.015) continue;
+          const cx = moon.x + Math.sin(t * 0.6 + y * 0.04) * moon.r * 0.3 * (0.3 + k);
+          const hh = 1.4 + k * 3.2;
+          const segs = n > 0.55 ? 1 : 2;
+          for (let j = 0; j < segs; j++) {
+            const off = segs === 1 ? 0 : (j ? 1 : -1) * base * (0.25 + 0.15 * Math.sin(t + y));
+            const w = base * (segs === 1 ? 0.9 + 0.5 * n : 0.45 + 0.3 * n);
+            ctx.globalAlpha = a;
+            ctx.drawImage(A.softGlow, cx + off - w / 2, y - hh, w, hh * 2);
+          }
+        }
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
     }
 
     drawKrathongs(ctx, t, now) {
       const T = Date.now() / 1000;
       const labels = [];
+      const gk = PAL[this.mode].glowK;
       for (const e of this.order) {
-        const sp = A.sprite(e.rec.base, e.rec.flower);
+        const r = e.rec;
+        const sp = A.sprite(r.base, r.flower, r.petal, r.tone);
         const { s, wpx, m, span, v } = this.motion(e);
         const k = wpx / sp.w;
-        let x = ((e.phase * span + T * v) % span) - m;
-        let yW = this.waterYOf(e.d) + Math.sin(t * 1.1 + e.seed) * 2.2 * s;
+        const x = ((e.phase * span + T * v) % span) - m;
+        const yW = this.waterYOf(e.d) + Math.sin(t * 1.1 + e.seed) * 2.2 * s;
         let alpha = 1, dy = 0;
         if (e.born) {
           const age = (now - e.born) / 1000;
           if (age < 1.6) {
             const p = clamp(age / 1.1, 0, 1);
-            const ease = 1 - Math.pow(1 - p, 3);
-            dy = -(1 - ease) * 90 * s;
+            dy = -(1 - (1 - Math.pow(1 - p, 3))) * 90 * s;
             alpha = clamp(age / 0.35, 0, 1);
           } else { e.born = 0; }
         }
@@ -497,59 +647,55 @@
 
         const fx = left + sp.flame.x * k, fy = top + sp.flame.y * k + dy;
         const flick = 0.85 + 0.15 * Math.sin(t * 13 + e.seed);
-        // แสงบนผิวน้ำ
         ctx.globalCompositeOperation = "lighter";
-        ctx.globalAlpha = 0.34 * alpha * flick;
+        ctx.globalAlpha = 0.34 * alpha * flick * gk;
         ctx.drawImage(A.glow, x - 150 * s, yW - 18 * s, 300 * s, 40 * s);
-        // เงาแสงเทียนทอดลงน้ำ
         for (let i = 0; i < 11; i++) {
           const yy = yW + 8 * s + i * 7 * s;
           if (yy > this.H) break;
           const ww = (18 - i * 1.3) * s * (0.6 + 0.4 * Math.sin(t * 3 + i + e.seed));
           const xx = fx + Math.sin(t * 2.1 + i * 0.9 + e.seed) * 3.5 * s;
           const hh = Math.max(1.2, 2.4 * s);
-          ctx.globalAlpha = (1 - i / 11) * 0.6 * alpha;
+          ctx.globalAlpha = (1 - i / 11) * 0.6 * alpha * gk;
           ctx.drawImage(A.softGlow, xx - ww * 0.75, yy - hh, ww * 1.5, hh * 2);
         }
-        if (e.rec.lucky) {
+        if (r.lucky) {
           const cyL = yW - wpx * 0.22 + dy;
-          ctx.globalAlpha = 0.45 * alpha * (0.8 + 0.2 * Math.sin(t * 2 + e.seed));
+          ctx.globalAlpha = 0.45 * alpha * (0.8 + 0.2 * Math.sin(t * 2 + e.seed)) * (this.mode === "day" ? 0.7 : 1);
           ctx.drawImage(A.glow, x - wpx * 0.9, cyL - wpx * 0.6, wpx * 1.8, wpx * 1.1);
         }
         ctx.globalCompositeOperation = "source-over";
         ctx.globalAlpha = alpha * 0.9;
         ctx.drawImage(sp.refl, left, top, sp.w * k, sp.h * k);
         ctx.globalAlpha = alpha;
-        const rot = Math.sin(t * 0.9 + e.seed) * 0.03;
         ctx.save();
         ctx.translate(x, yW + dy);
-        ctx.rotate(rot);
+        ctx.rotate(Math.sin(t * 0.9 + e.seed) * 0.03);
         ctx.drawImage(sp.canvas, -(sp.w / 2) * k, -sp.water * k, sp.w * k, sp.h * k);
         if (s > 0.42) A.smoke(ctx, sp.tips, -(sp.w / 2) * k, -sp.water * k, k, t, e.seed);
-        A.flame(ctx, (sp.flame.x - sp.w / 2) * k, (sp.flame.y - sp.water) * k, k * 1.25, t, e.seed);
+        A.flame(ctx, (sp.flame.x - sp.w / 2) * k, (sp.flame.y - sp.water) * k, k * 1.25, t, e.seed, gk < 1 ? 0.45 : 1);
         ctx.restore();
-        if (e.rec.lucky) this.sparkles(ctx, x, yW - wpx * 0.25 + dy, wpx, t, e.seed, alpha);
+        if (r.lucky) this.sparkles(ctx, x, yW - wpx * 0.25 + dy, wpx, t, e.seed, alpha);
         labels.push([e, x, top + sp.flame.y * k + dy - 30 * k, s, alpha]);
-        // เส้นน้ำแตะขอบกระทง
         ctx.globalAlpha = 0.18 * alpha;
-        ctx.strokeStyle = "#c8d6ff"; ctx.lineWidth = Math.max(0.6, s);
+        ctx.strokeStyle = this.mode === "day" ? "#ffffff" : "#c8d6ff"; ctx.lineWidth = Math.max(0.6, s);
         ctx.beginPath(); ctx.ellipse(x, yW + 4 * s, wpx * 0.36, wpx * 0.05, 0, 0.1, Math.PI - 0.1); ctx.stroke();
         ctx.globalAlpha = 1;
         if (this.focusId === e.id && now < this.focusUntil) {
           const p = ((now / 1000) % 1.4) / 1.4;
-          ctx.strokeStyle = `rgba(246,194,107,${0.8 * (1 - p)})`; ctx.lineWidth = 1.5;
-          ctx.beginPath(); ctx.ellipse(x, yW + 2, wpx * (0.45 + p * 0.4), wpx * (0.09 + p * 0.08), 0, 0, Math.PI * 2); ctx.stroke();
+          ctx.strokeStyle = `rgba(246,194,107,${0.9 * (1 - p)})`; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(x, yW + 2, wpx * (0.45 + p * 0.45), wpx * (0.09 + p * 0.09), 0, 0, TAU); ctx.stroke();
         }
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
-      for (const L of labels) this.drawLabel(ctx, ...L);
+      this.drawLabels(ctx, labels, now);
     }
 
     sparkles(ctx, x, y, wpx, t, seed, alpha) {
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < 5; i++) {
-        const a = t * 0.7 + seed + (i / 5) * Math.PI * 2;
+        const a = t * 0.7 + seed + (i / 5) * TAU;
         const px = x + Math.cos(a) * wpx * 0.5, py = y + Math.sin(a) * wpx * 0.14 - Math.abs(Math.sin(t * 1.3 + i)) * wpx * 0.12;
         const tw = 0.5 + 0.5 * Math.sin(t * 5 + i * 2 + seed), r = Math.max(2, wpx * 0.035) * (0.6 + tw * 0.6);
         ctx.globalAlpha = alpha * (0.4 + 0.6 * tw);
@@ -559,34 +705,65 @@
         ctx.lineTo(px, py + r * 2); ctx.lineTo(px - r * 0.4, py + r * 0.4); ctx.lineTo(px - r * 2, py); ctx.lineTo(px - r * 0.4, py - r * 0.4);
         ctx.closePath(); ctx.fill();
         ctx.globalAlpha = alpha * 0.35 * tw;
-        ctx.drawImage(window.LKArt.softGlow, px - r * 4, py - r * 4, r * 8, r * 8);
+        ctx.drawImage(A.softGlow, px - r * 4, py - r * 4, r * 8, r * 8);
       }
       ctx.restore();
     }
 
-    drawLabel(ctx, e, x, y, s, alpha) {
-      const name = (e.rec.name || "").trim();
-      if (!name || s < 0.3) return;
-      const fs = Math.round(Math.max(11, Math.min(15, 6 + 10 * s)));
-      if (!e.label || e.label.fs !== fs || e.label.src !== name) {
-        const text = name.length > 16 ? name.slice(0, 15) + "…" : name;
-        ctx.font = `500 ${fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
-        e.label = { fs, src: name, text, w: ctx.measureText(text).width };
+    /* ป้ายชื่อ: อยู่ในจอเสมอ หลบกันเองถ้าชน ใบใกล้ได้ที่ก่อน */
+    drawLabels(ctx, labels, now) {
+      const placed = [];
+      this.labelRects = [];
+      if (!this.showLabels) return;
+      const maxY = this.H - this.bottomInset - 4;
+      labels.sort((a, b) => b[3] - a[3]);
+      for (const [e, x, y, s, alpha0] of labels) {
+        const name = (e.rec.name || "").trim();
+        const mine = this.mine && this.mine.has(e.id);
+        if (!name || (s < 0.28 && !mine)) continue;
+        if (x < 0 || x > this.W) continue;
+        const fs = Math.round(Math.max(11, Math.min(15, 6 + 10 * s)));
+        if (!e.label || e.label.fs !== fs || e.label.src !== name) {
+          const text = name.length > 16 ? name.slice(0, 15) + "…" : name;
+          ctx.font = `500 ${fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
+          e.label = { fs, src: name, text, w: ctx.measureText(text).width };
+        }
+        const L = e.label, w = L.w + 16, h = fs + 9;
+        const tries = [[0, 0], [0, -(h + 4)], [-(w / 2 + 6), 0], [w / 2 + 6, 0], [0, -(2 * h + 8)], [0, h + 4]];
+        let rect = null;
+        for (const [dx, dy] of tries) {
+          const lx = clamp(x - w / 2 + dx, 6, this.W - w - 6), ly = clamp(y - h + dy, 6, maxY - h);
+          const hit = placed.some((r) => lx < r.x + r.w + 3 && lx + w + 3 > r.x && ly < r.y + r.h + 2 && ly + h + 2 > r.y);
+          if (!hit) { rect = { x: lx, y: ly, w, h, moved: dx !== 0 || dy !== 0 }; break; }
+        }
+        if (!rect) {
+          if (!mine && s < 0.7) continue;
+          rect = { x: clamp(x - w / 2, 6, this.W - w - 6), y: clamp(y - h, 6, maxY - h), w, h, moved: false };
+        }
+        placed.push(rect);
+        this.labelRects.push({ e, rect });
+        const edge = clamp(Math.min(x, this.W - x) / 50, 0, 1);
+        const a = alpha0 * edge * (0.55 + 0.45 * Math.min(1, (s - 0.28) / 0.5));
+        const focus = this.focusId === e.id && now < this.focusUntil;
+        ctx.globalAlpha = Math.max(a, mine ? 0.85 * edge : 0);
+        if (rect.moved) {
+          ctx.strokeStyle = "rgba(243,233,210,.35)"; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(rect.x + rect.w / 2, rect.y + rect.h); ctx.lineTo(x, y + 4); ctx.stroke();
+        }
+        ctx.fillStyle = mine || focus ? "rgba(246,194,107,.94)" : "rgba(6,11,24,.62)";
+        ctx.beginPath(); ctx.roundRect(rect.x, rect.y, rect.w, rect.h, rect.h / 2); ctx.fill();
+        if (!mine && !focus) { ctx.strokeStyle = e.rec.lucky ? "rgba(246,194,107,.85)" : "rgba(243,233,210,.16)"; ctx.lineWidth = e.rec.lucky ? 1.5 : 1; ctx.stroke(); }
+        if (mine) {
+          ctx.beginPath();
+          ctx.moveTo(rect.x + rect.w / 2 - 5, rect.y + rect.h - 0.5); ctx.lineTo(rect.x + rect.w / 2 + 5, rect.y + rect.h - 0.5); ctx.lineTo(rect.x + rect.w / 2, rect.y + rect.h + 6);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.font = `500 ${L.fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
+        ctx.fillStyle = mine || focus ? "#1b1f33" : "#f3e9d2";
+        ctx.textBaseline = "middle"; ctx.textAlign = "left";
+        ctx.fillText(L.text, rect.x + 8, rect.y + rect.h / 2 + 1);
+        ctx.globalAlpha = 1;
       }
-      const L = e.label, padX = 8, h = fs + 9;
-      const lx = Math.max(6, Math.min(this.W - L.w - padX * 2 - 6, x - L.w / 2 - padX));
-      const ly = Math.max(6, y - h);
-      const mine = this.mine && this.mine.has(e.id);
-      const a = alpha * (0.55 + 0.45 * Math.min(1, (s - 0.3) / 0.5));
-      ctx.globalAlpha = a;
-      ctx.fillStyle = mine ? "rgba(246,194,107,.92)" : "rgba(6,11,24,.62)";
-      ctx.beginPath(); ctx.roundRect(lx, ly, L.w + padX * 2, h, h / 2); ctx.fill();
-      if (!mine) { ctx.strokeStyle = e.rec.lucky ? "rgba(246,194,107,.85)" : "rgba(243,233,210,.16)"; ctx.lineWidth = e.rec.lucky ? 1.5 : 1; ctx.stroke(); }
-      ctx.font = `500 ${L.fs}px "IBM Plex Sans Thai Looped", system-ui, sans-serif`;
-      ctx.fillStyle = mine ? "#1b1f33" : "#f3e9d2";
-      ctx.textBaseline = "middle"; ctx.textAlign = "left";
-      ctx.fillText(L.text, lx + padX, ly + h / 2 + 1);
-      ctx.globalAlpha = 1;
     }
 
     drawRipples(ctx, now) {
@@ -598,7 +775,7 @@
           if (a <= 0) continue;
           const rx = (16 + a * 80) * r.s, al = Math.max(0, 0.5 * (1 - a / 2.4));
           ctx.strokeStyle = `rgba(215,228,255,${al})`; ctx.lineWidth = 1.2;
-          ctx.beginPath(); ctx.ellipse(r.x, r.y + 4 * r.s, rx * 1.4, rx * 0.24, 0, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.ellipse(r.x, r.y + 4 * r.s, rx * 1.4, rx * 0.24, 0, 0, TAU); ctx.stroke();
         }
       }
     }
@@ -660,11 +837,11 @@
   }
 
   /* ---------- พรีวิวในหน้าประดิษฐ์ ---------- */
-  River.preview = function (canvas, base, flower, t) {
+  River.preview = function (canvas, rec, t) {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
-    if (canvas.width !== Math.round(w * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+    if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
     const ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const wl = h * 0.7;
@@ -677,7 +854,7 @@
       ctx.fillStyle = `rgba(170,190,240,${a})`;
       ctx.fillRect(w * 0.1 + Math.sin(t + y) * 8, y, w * 0.8, 1);
     }
-    const sp = A.sprite(base, flower);
+    const sp = A.sprite(rec.base, rec.flower, rec.petal, rec.tone);
     const k = Math.min((w * 0.62) / sp.w, (h * 0.95) / sp.h);
     const x = w / 2, yW = wl + Math.sin(t * 1.2) * 2;
     ctx.globalAlpha = 0.4;

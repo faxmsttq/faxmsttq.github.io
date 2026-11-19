@@ -3,18 +3,45 @@
   "use strict";
 
   const BASES = {
-    banana:  { name: "ใบตอง",       note: "หยวกกล้วย พับกลีบใบตอง" },
-    lotus:   { name: "กลีบบัว",     note: "กลีบบัวซ้อนสามชั้น" },
-    bread:   { name: "ขนมปัง",      note: "ปลากินได้ ไม่เป็นขยะ" },
-    coconut: { name: "กะลามะพร้าว", note: "ลอยได้นาน ย่อยสลายเอง" },
+    banana:  { name: "ใบตอง",       note: "หยวกกล้วย พับกลีบใบตอง", meaning: "ความอุดมสมบูรณ์ งอกงามไม่สิ้นสุด", bless: "ชีวิตอุดมสมบูรณ์งอกงาม" },
+    lotus:   { name: "กลีบบัว",     note: "กลีบบัวซ้อนสามชั้น",     meaning: "ความบริสุทธิ์ และปัญญาที่เบ่งบาน", bless: "จิตใจบริสุทธิ์ ปัญญาเบ่งบาน" },
+    bread:   { name: "ขนมปัง",      note: "ปลากินได้ ไม่เป็นขยะ",   meaning: "ความเมตตา แบ่งปันให้สัตว์น้ำ",   bless: "มีใจเมตตา เผื่อแผ่ผู้อื่น" },
+    coconut: { name: "กะลามะพร้าว", note: "ลอยได้นาน ย่อยสลายเอง", meaning: "ความมั่นคง อดทนฝ่าทุกกระแส",    bless: "ใจมั่นคง ฝ่าทุกกระแสได้" },
+  };
+  const PETALS = {
+    phanom:     { name: "พนมมือ",     note: "กลีบแหลมเหมือนมือไหว้", meaning: "ความนอบน้อม และการขอขมาพระแม่คงคา", bless: "ด้วยใจนอบน้อม" },
+    kulap:      { name: "กุหลาบ",     note: "กลีบมน ม้วนปลาย",       meaning: "ความรักและความอ่อนโยน",            bless: "ด้วยความรักอ่อนโยน" },
+    lebmuenang: { name: "เล็บมือนาง", note: "กลีบเรียวยาว ปลายแหลม", meaning: "ความประณีต ใส่ใจทุกรายละเอียด",     bless: "ด้วยความประณีตใส่ใจ" },
+    phaka:      { name: "ผกาภิรมย์",  note: "กลีบซ้อนสองชั้น",        meaning: "ความสุขที่เบ่งบานซ้อนกันหลายชั้น",   bless: "พร้อมความสุขหลายชั้น" },
+  };
+  const TONES = {
+    natural: { name: "ธรรมชาติ", sw: "#3f8a4a", swLotus: "#e58fa8", meaning: "ความเรียบง่ายที่งดงาม", bless: "เรียบง่ายแต่งดงาม" },
+    pandan:  { name: "ใบเตย",    sw: "#5cc45f", swLotus: "#9fd08a", meaning: "ความสดชื่น มีชีวิตชีวา", bless: "สดชื่นทุกวัน" },
+    gold:    { name: "ทองคำ",    sw: "#d9a63e", swLotus: "#d9a63e", meaning: "ความรุ่งเรืองมั่งคั่ง",  bless: "รุ่งเรืองดั่งทอง" },
+    pink:    { name: "บานเย็น",  sw: "#d6589b", swLotus: "#d6589b", meaning: "ความสดใสร่าเริง",        bless: "สดใสร่าเริง" },
+    pearl:   { name: "ขาวมุก",   sw: "#efe9dc", swLotus: "#f3efe6", meaning: "ความใสสะอาดบริสุทธิ์",   bless: "ใสสะอาดดั่งไข่มุก" },
   };
   const FLOWERS = {
-    marigold: { name: "ดาวเรือง" },
-    rose:     { name: "กุหลาบ" },
-    jasmine:  { name: "มะลิ" },
-    orchid:   { name: "กล้วยไม้" },
-    lotus:    { name: "บัวตูม" },
+    marigold: { name: "ดาวเรือง", meaning: "ความเจริญรุ่งเรือง",                bless: "เจริญรุ่งเรืองยิ่งขึ้น" },
+    rose:     { name: "กุหลาบ",   meaning: "ความรักและความปรารถนาดี",           bless: "สมหวังในความรัก" },
+    jasmine:  { name: "มะลิ",     meaning: "ความบริสุทธิ์ และความกตัญญู",        bless: "มีใจบริสุทธิ์ กตัญญูรู้คุณ" },
+    orchid:   { name: "กล้วยไม้", meaning: "ความสง่างาม และความสำเร็จ",          bless: "สำเร็จอย่างสง่างาม" },
+    lotus:    { name: "บัวตูม",   meaning: "ความศรัทธา และความหวังที่กำลังเบ่งบาน", bless: "ความหวังเบ่งบานดั่งบัวพ้นน้ำ" },
   };
+  function meaningOf(rec) {
+    const b = BASES[rec.base] || BASES.banana, p = PETALS[rec.petal] || PETALS.phanom;
+    const t = TONES[rec.tone] || TONES.natural, f = FLOWERS[rec.flower] || FLOWERS.marigold;
+    return {
+      parts: [
+        { label: "ฐาน" + b.name, text: b.meaning },
+        { label: "กลีบ" + p.name, text: p.meaning },
+        { label: "สี" + t.name, text: t.meaning },
+        { label: "ดอก" + f.name, text: f.meaning },
+      ],
+      title: `กระทง${b.name} กลีบ${p.name} สี${t.name} ประดับ${f.name}`,
+      text: `ขอให้${b.bless} ${p.bless} ${t.bless} และ${f.bless}`,
+    };
+  }
 
   const SW = 400, SH = 300, WATER = 250, RES = 2;
 
@@ -87,6 +114,52 @@
       ctx.quadraticCurveTo(px + k * w * 0.2, py - h * 0.5, tx + k * 1.5, ty + h * 0.12);
     }
     ctx.strokeStyle = "rgba(255,255,255,.18)"; ctx.lineWidth = 0.7; ctx.stroke();
+  }
+
+  function roseFold(ctx, px, py, w, h, lean, back, palette) {
+    const [hue, sat, lD, lL] = palette(back);
+    const tx = px + lean * 0.8, ty = py - h * 0.9;
+    const outline = () => {
+      ctx.beginPath();
+      ctx.moveTo(px - w * 0.5, py);
+      ctx.bezierCurveTo(px - w * 0.66, py - h * 0.62, tx - w * 0.42, ty - h * 0.06, tx, ty);
+      ctx.bezierCurveTo(tx + w * 0.42, ty - h * 0.06, px + w * 0.66, py - h * 0.62, px + w * 0.5, py);
+      ctx.closePath();
+    };
+    let g = ctx.createLinearGradient(px, py, tx, ty);
+    g.addColorStop(0, hsl(hue, sat, lD - 8)); g.addColorStop(1, hsl(hue - 6, sat, lD + 8));
+    outline(); ctx.fillStyle = g; ctx.fill();
+    ctx.save(); outline(); ctx.clip();
+    g = ctx.createLinearGradient(px, py, tx, ty);
+    g.addColorStop(0, hsl(hue, sat, lL - 8)); g.addColorStop(1, hsl(hue - 8, sat - 6, lL + 10));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(px, py + 2); ctx.lineTo(tx, ty - 6); ctx.lineTo(px + w, ty - 6); ctx.lineTo(px + w, py + 2); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    outline(); ctx.strokeStyle = hsl(hue, sat, 10, 0.5); ctx.lineWidth = 0.9; ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(tx, ty + h * 0.1, w * 0.26, h * 0.08, 0, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.strokeStyle = hsl(hue - 15, 45, Math.min(96, lL + 26), 0.75); ctx.lineWidth = 1.4; ctx.stroke();
+  }
+  const lighter = (palette, k) => (back) => { const [a, b, c, d] = palette(back); return [a, b, Math.min(94, c + k), Math.min(96, d + k)]; };
+  function foldStyled(ctx, f, style, palette) {
+    if (style === "kulap") return roseFold(ctx, f.px, f.py, f.w * 1.08, f.h * 0.92, f.lean, f.back, palette);
+    if (style === "lebmuenang") {
+      fold(ctx, f.px, f.py, f.w * 0.62, f.h * 1.24, f.lean * 1.15, f.back, palette);
+      return;
+    }
+    fold(ctx, f.px, f.py, f.w, f.h, f.lean, f.back, palette);
+    if (style === "phaka") fold(ctx, f.px, f.py - 1, f.w * 0.55, f.h * 0.68, f.lean * 0.7, f.back, lighter(palette, 16));
+  }
+  function lotusPetal(ctx, f, style, L) {
+    const tip = f.back ? L[2] : L[1];
+    if (style === "kulap") {
+      petal(ctx, f.px, f.py, f.w * 1.4, f.h * 0.84, f.lean * 0.7, f.back, L[0], tip);
+      ctx.beginPath(); ctx.ellipse(f.px + f.lean * 0.7, f.py - f.h * 0.72, f.w * 0.3, f.h * 0.06, 0, Math.PI * 1.05, Math.PI * 1.95);
+      ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 1.3; ctx.stroke();
+      return;
+    }
+    if (style === "lebmuenang") return petal(ctx, f.px, f.py, f.w * 0.82, f.h * 1.14, f.lean * 0.9, f.back, L[0], tip);
+    petal(ctx, f.px, f.py, f.w * 1.15, f.h, f.lean * 0.8, f.back, L[0], tip);
+    if (style === "phaka") petal(ctx, f.px, f.py - 1, f.w * 0.62, f.h * 0.64, f.lean * 0.55, f.back, [L[0][2], L[0][2], "#ffffff"], L[2]);
   }
 
   function ring(tiers, cx, drawOne) {
@@ -235,9 +308,23 @@
   }
 
   /* ---------- ฐาน ---------- */
-  const leafPalette = (back) => back ? [82, 46, 34, 46] : [104, 42, 22, 33];
+  const TONE_PAL = {
+    natural: (back) => back ? [82, 46, 34, 46] : [104, 42, 22, 33],
+    pandan:  (back) => back ? [100, 62, 44, 58] : [118, 58, 31, 45],
+    gold:    (back) => back ? [44, 74, 50, 64] : [40, 70, 35, 50],
+    pink:    (back) => back ? [328, 60, 60, 72] : [330, 56, 44, 58],
+    pearl:   (back) => back ? [40, 24, 84, 92] : [38, 18, 70, 82],
+  };
+  const LOTUS = {
+    natural: [["#f6d5de", "#f9e4ea", "#fff1f4"], "#e0718f", "#f0a3b7"],
+    pandan:  [["#dcefd2", "#e9f6e1", "#f6fff0"], "#6aa457", "#a6d18f"],
+    gold:    [["#f5e2b0", "#faedc9", "#fff7e4"], "#c9962e", "#e2bd63"],
+    pink:    [["#f7cce4", "#fadcec", "#fff0f8"], "#c2408a", "#e07cb6"],
+    pearl:   [["#f3efe6", "#f8f5ee", "#ffffff"], "#c9bfa9", "#e3dccb"],
+  };
 
-  function drawBanana(ctx, cx) {
+  function drawBanana(ctx, cx, rnd, style, tone) {
+    const pal = TONE_PAL[tone] || TONE_PAL.natural;
     ctx.fillStyle = "#4f6a37";
     ctx.beginPath(); ctx.ellipse(cx, 256, 136, 34, 0, 0, Math.PI * 2); ctx.fill();
     const g = ctx.createLinearGradient(0, 220, 0, 280);
@@ -248,10 +335,11 @@
       { rx: 126, ry: 29, by: 246, n: 20, h: 44 },
       { rx: 92,  ry: 21, by: 225, n: 15, h: 40 },
       { rx: 58,  ry: 13, by: 206, n: 11, h: 34 },
-    ], cx, (f) => fold(ctx, f.px, f.py, f.w, f.h, f.lean, f.back, leafPalette));
+    ], cx, (f) => foldStyled(ctx, f, style, pal));
     return 196;
   }
-  function drawLotus(ctx, cx) {
+  function drawLotus(ctx, cx, rnd, style, tone) {
+    const L = LOTUS[tone] || LOTUS.natural;
     ctx.fillStyle = "#24472a";
     ctx.beginPath(); ctx.ellipse(cx, 256, 152, 34, 0, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "rgba(140,190,120,.25)"; ctx.lineWidth = 1;
@@ -264,11 +352,11 @@
       { rx: 80,  ry: 19, by: 228, n: 10, h: 56 },
       { rx: 48,  ry: 12, by: 212, n: 8,  h: 46 },
     ];
-    ring(tiers, cx, (f) => petal(ctx, f.px, f.py, f.w * 1.15, f.h, f.lean * 0.8, f.back,
-      ["#f6d5de", "#f9e4ea", "#fff1f4"], f.back ? "#f0a3b7" : "#e0718f"));
+    ring(tiers, cx, (f) => lotusPetal(ctx, f, style, L));
     return 202;
   }
-  function drawBread(ctx, cx, rnd) {
+  function drawBread(ctx, cx, rnd, style, tone) {
+    const pal = TONE_PAL[tone] || TONE_PAL.natural;
     ctx.fillStyle = "#8a4e1f";
     ctx.beginPath(); ctx.ellipse(cx, 258, 128, 36, 0, 0, Math.PI * 2); ctx.fill();
     const g = ctx.createRadialGradient(cx - 20, 236, 10, cx, 246, 130);
@@ -282,11 +370,11 @@
       ctx.fillStyle = `rgba(${120 + rnd() * 40},${70 + rnd() * 20},30,.35)`;
       ctx.fillRect(cx + Math.cos(a) * rr * 112, 246 + Math.sin(a) * rr * 26, 2, 1);
     }
-    ring([{ rx: 70, ry: 15, by: 236, n: 12, h: 26 }], cx,
-      (f) => fold(ctx, f.px, f.py, f.w, f.h, f.lean, f.back, leafPalette));
+    ring([{ rx: 70, ry: 15, by: 236, n: 12, h: 26 }], cx, (f) => foldStyled(ctx, f, style, pal));
     return 212;
   }
-  function drawCoconut(ctx, cx, rnd) {
+  function drawCoconut(ctx, cx, rnd, style, tone) {
+    const pal = TONE_PAL[tone] || TONE_PAL.natural;
     const g = ctx.createLinearGradient(0, 220, 0, 285);
     g.addColorStop(0, "#7b5130"); g.addColorStop(1, "#3a2414");
     ctx.fillStyle = g;
@@ -303,15 +391,18 @@
     ctx.beginPath(); ctx.ellipse(cx, 226, 112, 26, 0, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#a57a4c"; ctx.lineWidth = 4;
     ctx.beginPath(); ctx.ellipse(cx, 226, 113, 27, 0, 0, Math.PI * 2); ctx.stroke();
-    ring([{ rx: 86, ry: 18, by: 228, n: 14, h: 30 }], cx,
-      (f) => fold(ctx, f.px, f.py, f.w, f.h, f.lean, f.back, leafPalette));
+    ring([{ rx: 86, ry: 18, by: 228, n: 14, h: 30 }], cx, (f) => foldStyled(ctx, f, style, pal));
     return 206;
   }
 
   /* ---------- ประกอบ sprite ---------- */
   const cache = new Map();
-  function sprite(base, flowerType) {
-    const key = base + "|" + flowerType;
+  function sprite(base, flowerType, petalStyle, tone) {
+    if (!BASES[base]) base = "banana";
+    if (!FLOWERS[flowerType]) flowerType = "marigold";
+    if (!PETALS[petalStyle]) petalStyle = "phanom";
+    if (!TONES[tone]) tone = "natural";
+    const key = base + "|" + flowerType + "|" + petalStyle + "|" + tone;
     if (cache.has(key)) return cache.get(key);
     const rnd = rngFrom(key);
     const c = document.createElement("canvas");
@@ -320,10 +411,10 @@
     ctx.scale(RES, RES);
     const cx = SW / 2;
     let my;
-    if (base === "lotus") my = drawLotus(ctx, cx);
-    else if (base === "bread") my = drawBread(ctx, cx, rnd);
-    else if (base === "coconut") my = drawCoconut(ctx, cx, rnd);
-    else my = drawBanana(ctx, cx);
+    if (base === "lotus") my = drawLotus(ctx, cx, rnd, petalStyle, tone);
+    else if (base === "bread") my = drawBread(ctx, cx, rnd, petalStyle, tone);
+    else if (base === "coconut") my = drawCoconut(ctx, cx, rnd, petalStyle, tone);
+    else my = drawBanana(ctx, cx, rnd, petalStyle, tone);
 
     const R = flowerType === "jasmine" ? 20 : 21;
     const mound = [[0, -6, 1], [-36, 4, 0.82], [36, 4, 0.82], [-66, 16, 0.66], [66, 16, 0.66],
@@ -373,13 +464,13 @@
   const glow = radialSprite(256, [[0, "rgba(255,214,140,.95)"], [0.18, "rgba(255,190,100,.45)"], [0.5, "rgba(255,150,60,.12)"], [1, "rgba(255,140,50,0)"]]);
   const softGlow = radialSprite(128, [[0, "rgba(255,226,170,1)"], [0.35, "rgba(255,196,110,.35)"], [1, "rgba(255,170,80,0)"]]);
 
-  function flame(ctx, x, y, s, t, seed) {
+  function flame(ctx, x, y, s, t, seed, glowK = 1) {
     const f = 1 + 0.09 * Math.sin(t * 17 + seed) + 0.05 * Math.sin(t * 31 + seed * 2.3);
     const sway = Math.sin(t * 5.3 + seed) * 1.4 * s;
     const h = 24 * s * f, w = 6.5 * s;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = 0.5 * f;
+    ctx.globalAlpha = 0.5 * f * glowK;
     const gs = 150 * s;
     ctx.drawImage(glow, x - gs / 2, y - gs / 2 - 4 * s, gs, gs);
     ctx.restore();
@@ -447,7 +538,6 @@
     const ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    const sp = sprite(base, flowerType);
     if (opts.flowerOnly) {
       const k = h / 70;
       ctx.save(); ctx.translate(w / 2, h * 0.6); ctx.scale(k, k);
@@ -455,11 +545,12 @@
       ctx.restore();
       return;
     }
-    const k = Math.min(w / 330, h / 210);
-    const ox = w / 2 - (SW / 2) * k, oy = h * 0.82 - WATER * k;
+    const sp = sprite(base, flowerType, opts.petal, opts.tone);
+    const k = Math.min(w / 330, h / 210) * (opts.zoom || 1);
+    const ox = w / 2 - (SW / 2) * k, oy = h * (opts.water || 0.82) - WATER * k;
     ctx.drawImage(sp.canvas, ox, oy, SW * k, SH * k);
     flame(ctx, ox + sp.flame.x * k, oy + sp.flame.y * k, k, opts.t || 0, 1);
   }
 
-  window.LKArt = { BASES, FLOWERS, sprite, flame, smoke, glow, softGlow, paperTexture, thumb, rngFrom };
+  window.LKArt = { BASES, FLOWERS, PETALS, TONES, meaningOf, sprite, flame, smoke, glow, softGlow, paperTexture, thumb, rngFrom };
 })();

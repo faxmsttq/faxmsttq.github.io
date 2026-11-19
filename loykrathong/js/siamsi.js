@@ -80,7 +80,7 @@
       const at = performance.now();
       this.poe = faces.map((f, i) => ({
         face: f, sx: g.cx + (i ? 10 : -10), sy: g.floor - 20,
-        tx: g.cx + (i ? 1 : -1) * (g.w * 0.17 + Math.random() * 18), ty: g.floor + 2,
+        tx: g.cx + (i ? 1 : -1) * (g.w * 0.2 + Math.random() * 18), ty: g.floor + 2,
         spins: 3 + i * 0.5 + Math.random(), dur: 1050 + i * 120, at, landed: false,
       }));
       this.phase = "poe";
@@ -97,8 +97,8 @@
       const ctx = this.ctx, A = window.LKArt;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const t = (now - this.t0) / 1000;
-      const cw = Math.min(w * 0.28, 130), ch = Math.min(h * 0.48, 210);
-      const floor = h * 0.93;
+      const cw = Math.min(w * 0.36, 180), ch = Math.min(h * 0.6, 300);
+      const floor = h * 0.92;
       const geo = (this.geo = { w, h, cw, ch, cx: w / 2, floor, top: floor - ch });
 
       // พื้นหลัง + เทียน
@@ -106,7 +106,7 @@
       g.addColorStop(0, "#2a2035"); g.addColorStop(0.55, "#121a30"); g.addColorStop(1, "#0a1122");
       ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
       ctx.fillStyle = "rgba(255,220,160,.04)"; ctx.fillRect(0, floor - 4, w, h - floor + 4);
-      const candles = [[0.12, 0.84], [0.88, 0.84]];
+      const candles = [[0.09, 0.85], [0.91, 0.85]];
       ctx.globalCompositeOperation = "lighter";
       candles.forEach(([px, py], i) => { ctx.globalAlpha = 0.5 * (0.85 + 0.15 * Math.sin(t * 11 + i * 2)); ctx.drawImage(A.glow, w * px - 70, h * py - 80, 140, 140); });
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
@@ -156,10 +156,10 @@
         this.drawStick(ctx, s.x - dx, s.y - dy, s.x + dx, s.y + dy, true);
         if (s.state === "rest") {
           ctx.fillStyle = "#f6c26b";
-          ctx.beginPath(); ctx.arc(s.x, s.y - 30, 21, 0, TAU); ctx.fill();
-          ctx.fillStyle = "#1b1f33"; ctx.font = "700 21px 'IBM Plex Sans Thai Looped', sans-serif";
+          ctx.beginPath(); ctx.arc(s.x, s.y - 34, 25, 0, TAU); ctx.fill();
+          ctx.fillStyle = "#1b1f33"; ctx.font = "700 25px 'IBM Plex Sans Thai Looped', sans-serif";
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(Number(s.n).toLocaleString("th-TH-u-nu-thai"), s.x, s.y - 29);
+          ctx.fillText(Number(s.n).toLocaleString("th-TH-u-nu-thai"), s.x, s.y - 33);
         }
       }
 
@@ -247,7 +247,7 @@
 
     // ไม้ปวย: rot = 0 หลังโค้งขึ้น (คว่ำ), rot = π หน้าเรียบขึ้น (หงาย)
     drawPoe(ctx, x, y, rot, sq) {
-      const R = 20;
+      const R = this.geo ? Math.max(18, this.geo.cw * 0.15) : 20;
       ctx.save();
       ctx.translate(x, y - 8); ctx.rotate(rot); ctx.scale(1, sq);
       const g = ctx.createLinearGradient(0, -R, 0, 0);
@@ -284,6 +284,7 @@
   const TOPICS = {
     overall: "ภาพรวม", work: "การงาน การเรียน", love: "ความรัก", money: "การเงิน", health: "สุขภาพ",
   };
+  const TOPIC_SHORT = { overall: "ภาพรวม", work: "งาน/เรียน", love: "ความรัก", money: "การเงิน", health: "สุขภาพ" };
   async function storyImage(f, topic, opts = {}) {
     const fontsReady = document.fonts ? Promise.all([
       document.fonts.load("700 120px Charm"), document.fonts.load("500 40px 'IBM Plex Sans Thai Looped'"), document.fonts.load("600 40px 'IBM Plex Sans Thai Looped'"),
@@ -313,58 +314,66 @@
 
     const order = topic && topic !== "overall" ? [topic].concat(["work", "love", "money", "health"].filter((k) => k !== topic)) : ["work", "love", "money", "health"];
     const X = 70, Wc = 940, pad = 64, inner = Wc - pad * 2;
-    function layout(draw, y0) {
-      let y = y0 + pad;
-      ctx.font = "700 112px Charm, serif"; ctx.fillStyle = "#5a2e12";
-      if (draw) ctx.fillText("ใบที่ " + th(f.n), X + pad, y + 100);
-      ctx.font = "600 40px 'IBM Plex Sans Thai Looped', sans-serif";
-      const lw = ctx.measureText(f.level).width + 56;
+    const F = (w, px) => `${w} ${Math.round(px)}px 'IBM Plex Sans Thai Looped', sans-serif`;
+    function layout(draw, y0, k) {
+      let y = y0 + pad * k;
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+      ctx.font = `700 ${Math.round(112 * k)}px Charm, serif`; ctx.fillStyle = "#5a2e12";
+      if (draw) ctx.fillText("ใบที่ " + th(f.n), X + pad, y + 100 * k);
+      ctx.font = F(600, 40 * k);
+      const lw = ctx.measureText(f.level).width + 56 * k;
       if (draw) {
         ctx.fillStyle = f.lv === 4 ? "#5a2e12" : "rgba(0,0,0,0)";
         ctx.strokeStyle = f.lv === 1 ? "#8a2b1d" : "#5a2e12"; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.roundRect(X + Wc - pad - lw, y + 40, lw, 72, 36); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(X + Wc - pad - lw, y + 40 * k, lw, 72 * k, 36 * k); ctx.fill(); ctx.stroke();
         ctx.fillStyle = f.lv === 4 ? "#efe4cb" : f.lv === 1 ? "#8a2b1d" : "#22253a";
-        ctx.fillText(f.level, X + Wc - pad - lw + 28, y + 90);
+        ctx.fillText(f.level, X + Wc - pad - lw + 28 * k, y + 90 * k);
       }
-      y += 150;
-      ctx.font = "700 64px Charm, serif"; ctx.fillStyle = "#3b2414";
-      wrapLines(ctx, f.verse, inner).forEach((ln) => { y += 88; if (draw) ctx.fillText(ln, X + pad, y); });
-      y += 40;
+      y += 150 * k;
+      ctx.font = `700 ${Math.round(64 * k)}px Charm, serif`; ctx.fillStyle = "#3b2414";
+      wrapLines(ctx, f.verse, inner).forEach((ln) => { y += 88 * k; if (draw) ctx.fillText(ln, X + pad, y); });
+      y += 40 * k;
       if (draw) { ctx.strokeStyle = "rgba(34,37,58,.3)"; ctx.setLineDash([10, 10]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X + pad, y); ctx.lineTo(X + Wc - pad, y); ctx.stroke(); ctx.setLineDash([]); }
-      y += 20;
-      order.forEach((k, i) => {
+      y += 20 * k;
+      order.forEach((key, i) => {
         const focus = i === 0 && topic && topic !== "overall";
-        ctx.font = "500 40px 'IBM Plex Sans Thai Looped', sans-serif";
-        const lines = wrapLines(ctx, f[k], inner - (focus ? 40 : 0));
-        const blockH = 58 + lines.length * 58 + 24;
-        if (draw && focus) { ctx.fillStyle = "rgba(246,194,107,.35)"; ctx.beginPath(); ctx.roundRect(X + pad - 20, y + 6, inner + 40, blockH, 18); ctx.fill(); }
-        y += 52;
+        const ix = focus ? 20 : 0;
+        ctx.font = F(500, 40 * k);
+        const lines = wrapLines(ctx, f[key], inner - ix * 2);
+        const blockH = (58 + lines.length * 58 + 24) * k;
+        if (draw && focus) { ctx.fillStyle = "rgba(246,194,107,.35)"; ctx.beginPath(); ctx.roundRect(X + pad - 20, y + 6 * k, inner + 40, blockH, 18); ctx.fill(); }
+        y += 52 * k;
         if (draw) {
-          ctx.font = "600 34px 'IBM Plex Sans Thai Looped', sans-serif"; ctx.fillStyle = "rgba(34,37,58,.62)";
-          ctx.fillText(TOPICS[k] + (focus ? "  (เรื่องที่ถาม)" : ""), X + pad + (focus ? 6 : 0), y);
+          ctx.font = F(600, 34 * k); ctx.fillStyle = "rgba(34,37,58,.62)";
+          ctx.fillText(TOPICS[key] + (focus ? "  (เรื่องที่ถาม)" : ""), X + pad + ix, y);
         }
-        ctx.font = "500 40px 'IBM Plex Sans Thai Looped', sans-serif"; ctx.fillStyle = "#22253a";
-        lines.forEach((ln) => { y += 58; if (draw) ctx.fillText(ln, X + pad + (focus ? 6 : 0), y); });
-        y += 30;
+        ctx.font = F(500, 40 * k); ctx.fillStyle = "#22253a";
+        lines.forEach((ln) => { y += 58 * k; if (draw) ctx.fillText(ln, X + pad + ix, y); });
+        y += 30 * k;
       });
-      y += 10;
-      ctx.font = "500 40px 'IBM Plex Sans Thai Looped', sans-serif";
-      const tip = wrapLines(ctx, "คำแนะนำ  " + f.tip, inner);
-      tip.forEach((ln, i) => {
-        y += 58;
-        if (draw) {
-          if (i === 0) {
-            ctx.font = "600 40px 'IBM Plex Sans Thai Looped', sans-serif"; ctx.fillStyle = "#5a2e12";
-            const head = "คำแนะนำ  "; ctx.fillText(head, X + pad, y);
-            const hw = ctx.measureText(head).width;
-            ctx.font = "500 40px 'IBM Plex Sans Thai Looped', sans-serif"; ctx.fillStyle = "#22253a";
-            ctx.fillText(ln.replace(/^คำแนะนำ\s*/, ""), X + pad + hw, y);
-          } else { ctx.fillStyle = "#22253a"; ctx.fillText(ln, X + pad, y); }
-        }
-      });
-      return y + pad;
+      y += 10 * k;
+      const head = "คำแนะนำ  ";
+      ctx.font = F(600, 40 * k);
+      const hw = ctx.measureText(head).width;
+      ctx.font = F(500, 40 * k);
+      const tip = String(f.tip || "").trim();
+      const first = wrapLines(ctx, tip, inner - hw);
+      const line1 = first[0] || "";
+      const rest = wrapLines(ctx, tip.slice(line1.length).trim(), inner);
+      y += 58 * k;
+      if (draw) {
+        ctx.font = F(600, 40 * k); ctx.fillStyle = "#5a2e12"; ctx.fillText(head, X + pad, y);
+        ctx.font = F(500, 40 * k); ctx.fillStyle = "#22253a"; ctx.fillText(line1, X + pad + hw, y);
+      }
+      rest.forEach((ln) => { y += 58 * k; if (draw) ctx.fillText(ln, X + pad, y); });
+      return y + pad * k - y0;
     }
-    const h0 = layout(false, 0), Hc = Math.min(h0, 1260), y0 = Math.max(470, Math.round(470 + (1690 - 470 - Hc) / 2));
+    const maxH = 1690 - 470;
+    let k = 1, hNeed = layout(false, 0, k);
+    while (hNeed > maxH && k > 0.62) { k -= 0.04; hNeed = layout(false, 0, k); }
+    storyImage.lastFit = { k, hNeed, maxH };
+    const Hc = Math.min(hNeed, maxH);
+    const y0 = Math.max(470, Math.round(470 + (maxH - Hc) / 2));
     ctx.save();
     ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 60; ctx.shadowOffsetY = 24;
     ctx.fillStyle = "#efe4cb";
@@ -377,7 +386,7 @@
         ctx.fillStyle = ctx.createPattern(img, "repeat"); ctx.globalAlpha = 0.9; ctx.fillRect(X, y0, Wc, Hc); ctx.restore();
       } catch (e) {}
     }
-    layout(true, y0);
+    layout(true, y0, k);
 
     const t = 1.3;
     ctx.globalCompositeOperation = "lighter";
@@ -392,5 +401,5 @@
     return new Promise((res) => c.toBlob(res, "image/png"));
   }
 
-  window.LKSiamsi = { FORTUNES, LEVEL, TOPICS, randomNumber, Stage, storyImage };
+  window.LKSiamsi = { FORTUNES, LEVEL, TOPICS, TOPIC_SHORT, randomNumber, Stage, storyImage };
 })();
