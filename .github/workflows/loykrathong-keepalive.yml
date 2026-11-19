@@ -1,0 +1,41 @@
+# ปลุกฐานข้อมูล Supabase ของเว็บลอยกระทงทุก 2 วัน
+# (โปรเจกต์ Supabase แพ็กเกจฟรีจะถูกพักถ้าไม่มีการใช้งานราว 1 สัปดาห์)
+name: Loy Krathong keep-alive
+
+on:
+  schedule:
+    - cron: "17 2 */2 * *"   # ทุก 2 วัน เวลา 09:17 น. (ไทย)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://erqghucjydoiwzshzglf.supabase.co/rest/v1/settings?select=event_name" \
+            -H "apikey: sb_publishable_KJIqKyz6HfIL77tM2khwaw_KZooerB6")
+          echo "Supabase responded: $code"
+          test "$code" = "200"
+
+      - name: Ping website
+        run: curl -fsS -o /dev/null https://faxmsttq.github.io/loykrathong/
+
+      # GitHub ปิด workflow ตั้งเวลาเองถ้ารีโปเงียบ 60 วัน จึงบันทึกเวลาเดือนละครั้งให้รีโปยังมีความเคลื่อนไหว
+      - uses: actions/checkout@v4
+      - name: Monthly heartbeat commit
+        run: |
+          if [ "$(date -u +%d)" -le 02 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            mkdir -p .github
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/loykrathong-heartbeat.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .github/loykrathong-heartbeat.txt
+            git commit -m "Loy Krathong keep-alive heartbeat" && git push || echo "nothing to commit"
+          else
+            echo "Not heartbeat day"
+          fi
