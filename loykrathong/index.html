@@ -31,7 +31,7 @@
 
   /* ---------- หัวเรื่อง ---------- */
   .masthead{position:fixed;top:calc(28px + var(--safe-t));left:clamp(20px,4.5vw,64px);z-index:5;max-width:min(560px,80vw);pointer-events:none}
-  .title{font-family:"Charm",serif;font-weight:700;font-size:clamp(56px,8.6vw,120px);line-height:1.02;letter-spacing:0;
+  .title{font-family:"Charm",serif;font-weight:700;font-size:clamp(48px,7.4vw,112px);line-height:1.02;letter-spacing:0;
     color:var(--moon);text-shadow:0 0 34px rgba(246,194,107,.22),0 2px 0 rgba(0,0,0,.25);
     opacity:0;filter:blur(8px);transform:translateY(6px);transition:opacity 1.4s ease .3s,filter 1.4s ease .3s,transform 1.4s ease .3s}
   .tagline{margin-top:10px;max-width:34ch;text-wrap:balance;font-size:clamp(15px,1.5vw,17.5px);color:var(--moon-dim);
@@ -59,7 +59,7 @@
   .btn-primary:active{transform:translateY(1px)}
   .btn-primary:disabled{background:rgba(243,233,210,.18);color:rgba(243,233,210,.6);box-shadow:none;cursor:not-allowed}
   .btn-primary svg{width:14px;height:18px;flex:none}
-  .btn-text{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;font-size:15px;color:var(--moon);transition:background .2s}
+  .btn-text{white-space:nowrap;display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;font-size:15px;color:var(--moon);transition:background .2s}
   .btn-text:hover{background:rgba(243,233,210,.08)}
   .btn-text svg{width:18px;height:18px}
 
@@ -146,6 +146,7 @@
   .toast.show{opacity:1;transform:translate(-50%,0)}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
+  @media (max-width:1020px){ .btn-text .lbl{display:none} .btn-text{padding:12px} }
   @media (max-width:640px){
     .masthead{top:calc(22px + var(--safe-t))}
     .bar{flex-wrap:wrap;gap:10px 8px;padding-top:56px}
@@ -263,10 +264,10 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795106974"></script>
-<script src="js/art.js?v=1795106974"></script>
-<script src="js/api.js?v=1795106974"></script>
-<script src="js/river.js?v=1795106974"></script>
+<script src="config.js?v=1795107173"></script>
+<script src="js/art.js?v=1795107173"></script>
+<script src="js/api.js?v=1795107173"></script>
+<script src="js/river.js?v=1795107173"></script>
 <script>
 (() => {
   "use strict";
