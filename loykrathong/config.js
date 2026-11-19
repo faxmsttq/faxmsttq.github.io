@@ -7,6 +7,6 @@
    ถ้าเว้นว่างไว้ เว็บจะทำงานแบบ "โหมดตัวอย่าง" (เก็บข้อมูลในเครื่องเท่านั้น)
    =================================================================== */
 window.LK_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_KEY: "",
+  SUPABASE_URL: "https://erqghucjydoiwzshzglf.supabase.co",
+  SUPABASE_KEY: "sb_publishable_KJIqKyz6HfIL77tM2khwaw_KZooerB6",
 };

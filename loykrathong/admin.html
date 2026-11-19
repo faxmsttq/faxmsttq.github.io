@@ -162,13 +162,12 @@
 <div class="login" id="loginView" hidden>
   <form class="login-box" id="loginForm">
     <h1 class="brand">หลังบ้าน</h1>
-    <p class="sub">สำหรับผู้ดูแลงานลอยกระทงออนไลน์</p>
-    <label for="email">อีเมล</label>
-    <input class="input" id="email" type="email" autocomplete="username" required>
-    <label for="password">รหัสผ่าน</label>
-    <input class="input" id="password" type="password" autocomplete="current-password" required>
-    <button class="btn btn-main full" id="loginBtn" type="submit">เข้าสู่ระบบ</button>
+    <p class="sub">สำหรับผู้ดูแลงานลอยกระทงออนไลน์ ใส่อีเมลแล้วรับลิงก์เข้าสู่ระบบ ไม่ต้องใช้รหัสผ่าน</p>
+    <label for="email">อีเมลแอดมิน</label>
+    <input class="input" id="email" type="email" autocomplete="email" required>
+    <button class="btn btn-main full" id="loginBtn" type="submit">ส่งลิงก์เข้าสู่ระบบ</button>
     <p class="msg" id="loginMsg" role="alert" hidden></p>
+    <p class="note" id="loginSent" hidden>ส่งลิงก์ไปที่อีเมลแล้ว เปิดอีเมลแล้วกดลิงก์ "Log In" จะกลับมาหน้านี้และเข้าหลังบ้านให้เอง (ลิงก์ใช้ได้ครั้งเดียว)</p>
   </form>
 </div>
 
@@ -314,9 +313,9 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="config.js?v=1795106392"></script>
-<script src="js/art.js?v=1795106392"></script>
-<script src="js/api.js?v=1795106392"></script>
+<script src="config.js?v=1795106974"></script>
+<script src="js/art.js?v=1795106974"></script>
+<script src="js/api.js?v=1795106974"></script>
 <script>
 (() => {
   "use strict";
@@ -654,14 +653,19 @@
 
   $("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    $("loginBtn").disabled = true; $("loginMsg").hidden = true;
-    const { error } = await client.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+    $("loginBtn").disabled = true; $("loginMsg").hidden = true; $("loginSent").hidden = true;
+    const { error } = await client.auth.signInWithOtp({
+      email: $("email").value.trim(),
+      options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname },
+    });
     $("loginBtn").disabled = false;
     if (error) {
-      $("loginMsg").textContent = /invalid/i.test(error.message) ? "อีเมลหรือรหัสผ่านไม่ถูกต้อง" : "เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+      const m = error.message || "";
+      $("loginMsg").textContent = /signup|not allowed|not found/i.test(m) ? "อีเมลนี้ไม่มีสิทธิ์เข้าหลังบ้าน"
+        : /rate|seconds/i.test(m) ? "ขอลิงก์ถี่เกินไป รอสักครู่แล้วลองใหม่" : "ส่งลิงก์ไม่สำเร็จ: " + m;
       $("loginMsg").hidden = false; return;
     }
-    checkSession();
+    $("loginSent").hidden = false;
   });
   async function logout() { await client.auth.signOut(); location.hash = ""; show("loginView"); }
   $("denyOut").addEventListener("click", logout);
